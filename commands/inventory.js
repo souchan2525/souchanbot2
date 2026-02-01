@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
-const data = JSON.parse(fs.readFileSync("C:/Users/souta/Downloads/プログラミングお遊び部屋/discord bot（諦めるかも）/第2bot(javascript)/data.json", "utf8"));
+const data = JSON.parse(fs.readFileSync("data.json", "utf8"));
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("inventory")
@@ -27,4 +27,5 @@ module.exports = {
             console.error("エラー内容:" + er)
         }
     }
+
 };
