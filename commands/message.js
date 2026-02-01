@@ -1,5 +1,20 @@
 const { SlashCommandBuilder } = require("discord.js");
 module.exports = {
+    data: new SlashCommandBuilder()
+        .setName("message")
+        .setDescription("メッセージを言ってくれるよ！")
+        .addStringOption(option =>
+            option.setName("text")
+                .setDescription("言わせたいことを書いてね！")
+                .setRequired(true)
+        )
+        .addIntegerOption(option =>
+            option.setName("num")
+                .setDescription("1から5の間で選んでね！")
+                .setMinValue(1)
+                .setMaxValue(5)
+                .setRequired(false)
+        ),
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
         try {
@@ -23,3 +38,4 @@ module.exports = {
     }
 
 };
+
