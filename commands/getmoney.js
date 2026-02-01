@@ -15,7 +15,7 @@ module.exports = {
             option.setName("user")
                 .setDescription("ユーザーidを入力してね！")
                 .setRequired(true)
-        )
+        ),
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
         try {
