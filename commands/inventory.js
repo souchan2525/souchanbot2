@@ -2,9 +2,6 @@ const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const fs = require("fs");
 const data = JSON.parse(fs.readFileSync(__dirname + "/data.json", "utf8"));
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName("inventory")
-        .setDescription("現在の所持金を表示します！"),
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
         try {
@@ -29,4 +26,5 @@ module.exports = {
     }
 
 };
+
 
