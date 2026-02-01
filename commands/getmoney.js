@@ -14,7 +14,7 @@ module.exports = {
                         const money = interaction.options.getInteger("balance")
                         const user = interaction.options.getInteger("user")
                         data[user].money += parseInt(money)
-                        fs.writeFileSync(__dirname + "/data.json", "utf8"), JSON.stringify(data, null, 2), "utf8");
+                        fs.writeFileSync(__dirname + "/data.json", "utf8", JSON.stringify(data, null, 2), "utf8");
                         const embed = new EmbedBuilder()
                             .setTitle("💰お金を追加しました！")
                             .setDescription("<@${user}>さんに${money}コイン追加しました！")
