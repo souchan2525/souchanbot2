@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const express = require("express");
+const app = express();
 require("dotenv").config()
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 
@@ -39,9 +41,6 @@ client.once("ready", () => {
     console.log(`ログイン完了: ${client.user.tag}`);
 });
 
-const express = require("express");
-const app = express();
-
 app.get("/", (req, res) => {
   res.send("Bot is alive!");
 });
@@ -51,3 +50,4 @@ app.listen(3000, () => {
 });
 
 client.login(process.env.token);
+
