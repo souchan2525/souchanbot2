@@ -25,12 +25,13 @@ module.exports = {
                 for (ad of adminlist) {
                     if (String(ad) === userid) {
                         const money = interaction.options.getInteger("balance")
-                        const user = interaction.options.getInteger("user")
-                        data[user].money += parseInt(money)
-                        fs.writeFileSync(__dirname + "/data.json", "utf8", JSON.stringify(data, null, 2), "utf8");
+                        const user = interaction.options.getString("user")
+                        if (!data[user]) data[user] = { money: 0 };
+                        data[user].money += money
+                        fs.writeFileSync(__dirname + "/data.json", JSON.stringify(data, null, 2), "utf8");
                         const embed = new EmbedBuilder()
                             .setTitle("💰お金を追加しました！")
-                            .setDescription("<@${user}>さんに${money}コイン追加しました！")
+                            .setDescription(`<@${user}>さんに${money}コイン追加しました！`)
                             .setFooter({
                                 text: "詳しくは/inventoryで確認してみてね！"
                             })
