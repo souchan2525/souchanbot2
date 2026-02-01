@@ -39,4 +39,15 @@ client.once("ready", () => {
     console.log(`ログイン完了: ${client.user.tag}`);
 });
 
+const express = require("express");
+const app = express();
+
+app.get("/", (req, res) => {
+  res.send("Bot is alive!");
+});
+
+app.listen(3000, () => {
+  console.log("Ping server running");
+});
+
 client.login(process.env.token);
