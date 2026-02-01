@@ -35,7 +35,7 @@ module.exports = {
         });
       }
 
-      const money = interaction.options.getInteger("balance");
+      const money = parseInt(interaction.options.getInteger("balance"));
       const user = interaction.options.getString("user");
 
       // ユーザーが存在しなければ初期化
