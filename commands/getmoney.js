@@ -19,7 +19,7 @@ module.exports = {
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
         try {
-            if (interaction.commandName === "moneyget") {
+            if (interaction.commandName === "getmoney") {
                 const userid = interaction.user.id
                 const adminlist = [830518901221490740, 1395712192795512902]
                 for (ad of adminlist) {
