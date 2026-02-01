@@ -51,8 +51,8 @@ module.exports = {
       );
 
       let embed = new EmbedBuilder()
-        .setTitle("💰お金を追加しました！")
-        .setDescription(`<@${user}> さんに ${money} コイン追加しました！`)
+        .setTitle("💰金額を変更しました！")
+        .setDescription(`<@${user}> さんに ${money} コイン与えました！`)
         .setFooter({ text: "詳しくは /inventory で確認してみてね！" })
         .setColor("Blue")
       if (money < 0) {
