@@ -50,11 +50,18 @@ module.exports = {
         "utf8"
       );
 
-      const embed = new EmbedBuilder()
+      let embed = new EmbedBuilder()
         .setTitle("💰お金を追加しました！")
         .setDescription(`<@${user}> さんに ${money} コイン追加しました！`)
         .setFooter({ text: "詳しくは /inventory で確認してみてね！" });
-
+        .setColor("blue")
+      if (money < 0) {
+        embed.setColor("Red")
+      } else if (money > 0) {
+        embed.setColor("Gold")
+      } else if (money === 0) {
+        embed.setColor("Default")
+      }
       interaction.reply({ embeds: [embed] });
 
     } catch (er) {
