@@ -1,6 +1,23 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 
 module.exports = {
+    data: new SlashCommandBuilder()
+        .setName("weather")
+        .setDescription("お天気を教えてくれるよ！")
+        .addStringOption(option => 
+            option.setName("city")
+                .setDescription("都市名をローマ字で入れてね！")
+                .setRequired(true)
+        )
+        .addStringOption(option =>
+            option.setName("bool")
+                .setDescription("都市名を伏せるかどうか")
+                .setRequired(true)
+                .setChoices(
+                    { name: "伏せる", value: "true" },
+                    { name: "伏せない", value: "false" }
+                )
+        ),
     async execute(interaction) {
         try {
             if (!interaction.isChatInputCommand()) return;
@@ -50,4 +67,5 @@ module.exports = {
         }
     }
 };
+
 
