@@ -3,6 +3,19 @@ const fs = require("fs");
 const path = require("path")
 const data = JSON.parse(fs.readFileSync(__dirname + "/data.json", "utf8"));
 module.exports = {
+    data: new SlashCommandBuilder()
+        .setName("getmoney")
+        .setDescription("お金を与えます！（bot管理者専用）")
+        .addIntegerOption(option => 
+            option.setName("balance")
+                .setDescription("金額を指定します！")
+                .setRequired(true)
+        )
+        .addStringOption(option =>
+            option.setName("user")
+                .setDescription("ユーザーidを入力してね！")
+                .setRequired(true)
+        )
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
         try {
