@@ -8,7 +8,7 @@ module.exports = {
         try {
             const sent = await interaction.reply({ content: "計測中...", fetchReply: true });
             const ping = sent.createdTimestamp - interaction.createdTimestamp;
-            await interaction.editReply( `🏓 **Pong!**\n` + `メッセージ応答速度: **${ping}ms**\n` ); }
+            await interaction.editReply( `🏓 **Pong!**\n` + `メッセージ応答速度: **${ping}ms**\n` );
         } catch (er) {
             console.error("エラー内容:" + er)
         }
