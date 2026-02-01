@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require("discord.js");
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("ping")
-        .setDescription("botが生きてるか確認できるよ！")
+        .setDescription("botが生きてるか確認できるよ！"),
     async execute(interaction) {
         if (!interaction.isChatInputCommand()) return;
         try {
