@@ -23,7 +23,7 @@ module.exports = {
                 const userid = interaction.user.id
                 const adminlist = [830518901221490740, 1395712192795512902]
                 for (ad of adminlist) {
-                    if (ad === userid) {
+                    if (String(ad) === userid) {
                         const money = interaction.options.getInteger("balance")
                         const user = interaction.options.getInteger("user")
                         data[user].money += parseInt(money)
