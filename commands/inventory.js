@@ -1,6 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { createClient } = require("@supabase/supabase-js");
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 const fs = require("fs");
-const data = JSON.parse(fs.readFileSync(__dirname + "/data.json", "utf8"));
 module.exports = {
     data: new SlashCommandBuilder()
         .setName("inventory")
@@ -11,7 +15,12 @@ module.exports = {
             if (interaction.commandName === "inventory") {
                 const userid = String(interaction.user.id);
                 const username = interaction.user.globalName
-                const money = data[userid].money;
+                const { data, error } = await supabase
+                    .from("money")
+                    .select("money")
+                    .eq("user_id", userid)
+                    .single() ?? 0;
+                const money = data ? data.money : 0;
                 const embed = new EmbedBuilder()
                     .setTitle("現在の所持金💰")
                     .setDescription(`${money}コイン`)
@@ -29,6 +38,7 @@ module.exports = {
     }
 
 };
+
 
 
 
