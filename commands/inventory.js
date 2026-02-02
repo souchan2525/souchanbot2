@@ -1,9 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { createClient } = require("@supabase/supabase-js");
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
-);
+const { supabase } = require("../bot.js");
+
 const fs = require("fs");
 module.exports = {
     data: new SlashCommandBuilder()
@@ -38,6 +35,7 @@ module.exports = {
     }
 
 };
+
 
 
 
