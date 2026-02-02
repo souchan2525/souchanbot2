@@ -7,6 +7,9 @@ const supabase = createClient(
   process.env.basekey
 );
 
+console.log("URL:", process.env.baseurl);
+console.log("KEY:", process.env.basekey);
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("getmoney")
