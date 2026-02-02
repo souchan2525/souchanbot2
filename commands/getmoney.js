@@ -1,7 +1,10 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const fs = require("fs");
-const path = require("path");
-const data = JSON.parse(fs.readFileSync(__dirname + "/data.json", "utf8"));
+const { createClient } = require("@supabase/supabase-js");
+
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_KEY
+);
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -22,50 +25,68 @@ module.exports = {
     if (!interaction.isChatInputCommand()) return;
 
     try {
-      const userid = interaction.user.id;
-
-      // 管理者IDは文字列で持つ
+      const executorId = interaction.user.id;
       const adminlist = ["830518901221490740", "1395712192795512902"];
 
-      // ❗ for 文ではなく includes を使う
-      if (!adminlist.includes(userid)) {
+      // 管理者チェック
+      if (!adminlist.includes(executorId)) {
         return interaction.reply({
           content: "これはbot管理者のみ実行できます！",
           ephemeral: true
         });
       }
 
-      const money = parseInt(interaction.options.getInteger("balance"));
-      const user = interaction.options.getString("user");
+      const amount = interaction.options.getInteger("balance");
+      const targetUser = interaction.options.getString("user");
 
-      // ユーザーが存在しなければ初期化
-      if (!data[user]) data[user] = { money: 0 };
+      // 現在の所持金を取得
+      const { data, error } = await supabase
+        .from("money")
+        .select("money")
+        .eq("user_id", targetUser)
+        .single();
 
-      data[user].money += money;
+      const currentMoney = data ? data.money : 0;
 
-      // JSON 書き込み
-      fs.writeFileSync(
-        __dirname + "/data.json",
-        JSON.stringify(data, null, 2),
-        "utf8"
-      );
+      // 更新（なければ作成）
+      const { error: upsertError } = await supabase
+        .from("money")
+        .upsert({
+          user_id: targetUser,
+          money: currentMoney + amount
+        });
 
-      let embed = new EmbedBuilder()
-        .setTitle("💰金額を変更しました！")
-        .setDescription(`<@${user}> さんに ${money} コイン与えました！`)
-        .setFooter({ text: "詳しくは /inventory で確認してみてね！" })
-        .setColor("Blue")
-      if (money < 0) {
-        embed.setColor("Red")
-      } else if (money > 0) {
-        embed.setColor("Gold")
-      } else if (money === 0) {
-        embed.setColor("Default")
+      if (upsertError) {
+        console.error(upsertError);
+        return interaction.reply({
+          content: "データ更新中にエラーが発生しました...",
+          ephemeral: true
+        });
       }
+
+      // 返信
+      const embed = new EmbedBuilder()
+        .setTitle("💰お金を追加しました！")
+        .setDescription(`<@${targetUser}> さんに **${amount} コイン** 追加しました！`)
+        .setColor("Green")
+        .setFooter({ text: `実行者: ${interaction.user.globalName}` });
+
       interaction.reply({ embeds: [embed] });
 
     } catch (er) {
-      console.error("エラー内容:" + er);
+      console.error("エラー内容:", er);
+
+      if (interaction.deferred || interaction.replied) {
+        return interaction.followUp({
+          content: "エラーが発生しました…",
+          ephemeral: true
+        });
+      }
+
+      interaction.reply({
+        content: "エラーが発生しました…",
+        ephemeral: true
+      });
     }
   }
 };
