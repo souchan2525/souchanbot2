@@ -1,3 +1,4 @@
+require("dotenv").config();
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
 const { createClient } = require("@supabase/supabase-js");
 
