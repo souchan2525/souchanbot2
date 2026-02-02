@@ -4,6 +4,8 @@ const express = require("express");
 const app = express();
 require("dotenv").config()
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
+const { createClient } = require("@supabase/supabase-js");
+const supabase = createClient( process.env.baseurl, process.env.basekey );
 
 const client = new Client({
     intents: [
@@ -56,5 +58,6 @@ app.listen(3000, () => {
 });
 
 client.login(process.env.token);
+
 
 
