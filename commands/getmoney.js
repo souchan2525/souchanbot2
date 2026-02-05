@@ -40,7 +40,7 @@ module.exports = {
       const { data, error } = await supabase
         .from("money")
         .select("money")
-        .eq("user_id", targetUser)
+        .eq("userid", targetUser)
         .single();
 
       const currentMoney = data ? data.money : 0;
