@@ -1,6 +1,7 @@
 require("dotenv").config();
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { supabase } = require("../bot.js");
+const { createClient } = require("@supabase/supabase-js");
+const supabase = createClient( process.env.baseurl, process.env.basekey );
 
 module.exports = {
   data: new SlashCommandBuilder()
