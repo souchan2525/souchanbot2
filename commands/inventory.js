@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder } = require("discord.js");
-const { supabase } = require("../bot.js");
+const { createClient } = require("@supabase/supabase-js");
+const supabase = createClient( process.env.baseurl, process.env.basekey );
 
 const fs = require("fs");
 module.exports = {
@@ -35,6 +36,7 @@ module.exports = {
     }
 
 };
+
 
 
 
