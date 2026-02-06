@@ -53,6 +53,8 @@ module.exports = {
         } catch (er) {
             console.error("エラー内容:" + er)
         }
+
+    // weather
     new SlashCommandBuilder()
         .setName("weather")
         .setDescription("お天気を教えてくれるよ！")
@@ -118,3 +120,4 @@ module.exports = {
             await interaction.reply("送信に失敗しました...")
         }
     }
+}
