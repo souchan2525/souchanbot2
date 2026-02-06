@@ -1,65 +1,58 @@
+require("dotenv").config();
 const fs = require("fs");
 const path = require("path");
-const express = require("express");
-const app = express();
-require("dotenv").config()
 const { Client, GatewayIntentBits, Collection } = require("discord.js");
 const { createClient } = require("@supabase/supabase-js");
-const supabase = createClient( process.env.baseurl, process.env.basekey );
-module.exports = { supabase };
 
+// Supabase クライアント
+const supabase = createClient(
+  process.env.baseurl,
+  process.env.basekey
+);
+
+// Discord クライアント
 const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent
-    ]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
+// コマンドコレクション
 client.commands = new Collection();
 
-const commandsPath = path.join(__dirname, "commands");
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith(".js"));
+// commands/commands.js を読み込む
+const commandsPath = path.join(__dirname, "commands", "commands.js");
+const commandFile = require(commandsPath);
 
-for (const file of commandFiles) {
-    const command = require(`./commands/${file}`);
-    client.commands.set(command.data.name, command);
+// commands.js が複数コマンドを export している前提
+for (const command of commandFile) {
+  client.commands.set(command.data.name, command);
+  console.log(`Loaded command: ${command.data.name}`);
 }
 
+// スラッシュコマンド実行
 client.on("interactionCreate", async interaction => {
-    if (!interaction.isChatInputCommand()) return;
+  if (!interaction.isChatInputCommand()) return;
 
-    const command = client.commands.get(interaction.commandName);
-    if (!command) return;
+  const command = client.commands.get(interaction.commandName);
+  if (!command) return;
 
-    try {
-        await command.execute(interaction);
-    } catch (err) {
-        console.error(err);
-        if (interaction.deferred || interaction.replied) {
-            await interaction.followUp({
-                content: "エラーが発生しました...", ephemeral: true
-            });
-        } else {
-            await interaction.reply({ content: "エラーが発生しました...", ephemeral: true }); 
-        }
+  try {
+    await command.execute(interaction);
+  } catch (error) {
+    console.error(error);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
+    } else {
+      await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
     }
+  }
 });
 
-client.once("ready", () => {
-    console.log(`ログイン完了: ${client.user.tag}`);
-});
-
-app.get("/", (req, res) => {
-  res.send("Bot is alive!");
-});
-
-app.listen(3000, () => {
-  console.log("Ping server running");
-});
-
+// ログイン
 client.login(process.env.token);
 
-
-
-
+// Supabase を commands.js で使えるように export
+module.exports = { supabase };
