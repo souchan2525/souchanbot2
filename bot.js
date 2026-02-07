@@ -22,11 +22,10 @@ const commands = [
     data: new SlashCommandBuilder()
       .setName("message")
       .setDescription("メッセージを言ってくれるよ！")
-      .addStringOption(o => o.setName("text").setDescription("言わせたい内容").setRequired(true))
-      .addIntegerOption(o => o.setName("num").setDescription("回数").setMinValue(1).setMaxValue(5)),
+      .addStringOption(o => o.setName("text").setDescription("言わせたい内容").setRequired(true)),
     async execute(interaction) {
       const text = interaction.options.getString("text");
-      const num = interaction.options.getInteger("num") ?? 1;
+      const num = 1;
 
       await interaction.reply({ content: `送信開始！（${num}回）`, ephemeral: true });
       for (let i = 0; i < num; i++) {
@@ -170,3 +169,4 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
