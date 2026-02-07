@@ -29,7 +29,9 @@ const commands = [
       await interaction.followUp(
 `
 ${text}
-\`送信者: ${interaction.user.username}\`
+\`
+送信者: ${interaction.user.username}
+\`
 `
       );
     }
@@ -170,6 +172,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
