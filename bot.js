@@ -159,7 +159,7 @@ client.on("interactionCreate", async interaction => {
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
     } else {
-      await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
+      await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
     }
   }
 });
@@ -168,6 +168,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
