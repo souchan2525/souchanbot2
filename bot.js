@@ -27,9 +27,7 @@ const commands = [
       const text = interaction.options.getString("text");
       await interaction.reply({ content: "送るよ！", ephemeral: true })
       await interaction.followUp(
-        `${text}\n\`\`\`
-        送信者: ${interaction.user.username}
-        \`\`\``
+        `${text}\n\`\`\`送信者: ${interaction.user.username}\`\`\``
       );
     }
   },
@@ -169,6 +167,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
