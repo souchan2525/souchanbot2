@@ -61,9 +61,7 @@ const commands = [
           )
       ),
     async execute(interaction) {
-      try {
-        await interaction.deferReply({ flags: 64 });
-    
+      try {    
         const city = interaction.options.getString("city");
         const bool = interaction.options.getString("bool");
     
@@ -185,6 +183,7 @@ client.once("clientReady", () => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
