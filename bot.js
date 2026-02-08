@@ -87,7 +87,7 @@ const commands = [
             { name: "湿度", value: `💧 ${data.main.humidity}%`, inline: true },
             { name: "風速", value: `💨 ${data.wind.speed}m/s`, inline: true },
             { name: "日の出", value: `🌄 <t:${data.sys.sunrise}:T>`, inline: true },
-            { name: "日の入り", value: `🌅 <t:${data.sys.sunset}:T>`, inline: true }
+            { name: "日の入り", value: `:sunset: <t:${data.sys.sunset}:T>`, inline: true }
           )
           .setFooter({ text: "提供元:OpenWeatherMap" });
     
@@ -176,6 +176,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
