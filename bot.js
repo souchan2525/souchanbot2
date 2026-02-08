@@ -109,29 +109,27 @@ const commands = [
           await interaction.followUp({ content: "送信に失敗しました...", flags: 64 });
         } catch {}
       }
-    },
-
-    // ボタン
-    {
-      data: new SlashCommandBuilder().setName("button_test")
-        .setDescription("お試しボタン")
-      async execute(interaction) {
-        if (!interaction.isChatInputCommand()) return;
-        if (interaction.commandName !== "button_test") return;
-        const button1 = new ButtonBuilder().setCustomId("button1")
-          .setLabel("お試しボタン1")
-          .setStyle(ButtonStyle.Primary)
-        const button2 = new ButtonBuilder().setCustomId("button2")
-          .setLabel("お試しボタン2")
-          .setStyle(ButtonStyle.Success)
-        const row = new ActionRowBuilder().addComponents(button1, button2)
-        await interaction.reply({
-          content: "これはボタンのテストだよ！",
-          components: [row]
-        })
-      }
     }
-
+  },
+    // ボタン
+  {
+    data: new SlashCommandBuilder().setName("button_test")
+      .setDescription("お試しボタン")
+    async execute(interaction) {
+      if (!interaction.isChatInputCommand()) return;
+      if (interaction.commandName !== "button_test") return;
+      const button1 = new ButtonBuilder().setCustomId("button1")
+        .setLabel("お試しボタン1")
+        .setStyle(ButtonStyle.Primary)
+      const button2 = new ButtonBuilder().setCustomId("button2")
+        .setLabel("お試しボタン2")
+        .setStyle(ButtonStyle.Success)
+      const row = new ActionRowBuilder().addComponents(button1, button2)
+      await interaction.reply({
+        content: "これはボタンのテストだよ！",
+        components: [row]
+      })
+    }
   }
 ];
 
@@ -180,6 +178,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
