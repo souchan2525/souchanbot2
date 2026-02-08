@@ -101,7 +101,7 @@ const commands = [
           await interaction.editReply("送信します！");
           await interaction.followUp({ embeds: [embed] });
         } else {
-          await interaction.editReply({ embeds: [embed] });
+          await interaction.editReply({ embeds: [embed], ephemeral: false });
         }
       } catch (er) {
         console.error(er);
@@ -172,10 +172,15 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
+client.once("clientReady", () => {
+  console.log("✅botが起動したよ！")
+})
+
 // ===============================
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
