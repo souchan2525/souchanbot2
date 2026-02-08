@@ -25,8 +25,7 @@ const commands = [
       .addStringOption(o => o.setName("text").setDescription("言わせたい内容").setRequired(true)),
     async execute(interaction) {
       const text = interaction.options.getString("text");
-      await interaction.reply({ content: "送るよ！", ephemeral: true })
-      await interaction.followUp(`${text}\n\`送信者: ${interaction.user.username}\``);
+      await interaction.reply(text);
     }
   },
 
@@ -178,6 +177,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
