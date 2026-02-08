@@ -24,6 +24,7 @@ const commands = [
       .setDescription("メッセージを言ってくれるよ！")
       .addStringOption(o => o.setName("text").setDescription("言わせたい内容").setRequired(true)),
     async execute(interaction) {
+      await interaction.deferReply({ flags: 64 });
       const text = interaction.options.getString("text");
       await interaction.reply(text);
     }
@@ -115,8 +116,6 @@ const commands = [
     data: new SlashCommandBuilder().setName("button_test")
       .setDescription("お試しボタン"),
     async execute(interaction) {
-      if (!interaction.isChatInputCommand()) return;
-      if (interaction.commandName !== "button_test") return;
       const button1 = new ButtonBuilder().setCustomId("button1")
         .setLabel("お試しボタン1")
         .setStyle(ButtonStyle.Primary)
@@ -177,6 +176,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
