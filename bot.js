@@ -26,10 +26,7 @@ const commands = [
     async execute(interaction) {
       const text = interaction.options.getString("text");
       await interaction.reply({ content: "送るよ！", ephemeral: true })
-      await interaction.followUp(
-`${text}
-\`送信者: ${interaction.user.username}\``
-      );
+      await interaction.followUp(`${text}\n\`送信者: ${interaction.user.username}\``);
     }
   },
 
@@ -153,7 +150,7 @@ client.on("interactionCreate", async interaction => {
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
     } else {
-      await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
+      await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
     }
   }
 });
@@ -162,6 +159,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
