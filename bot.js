@@ -111,10 +111,10 @@ const commands = [
       }
     }
   },
-    // ボタン
+  // ボタン
   {
     data: new SlashCommandBuilder().setName("button_test")
-      .setDescription("お試しボタン")
+      .setDescription("お試しボタン"),
     async execute(interaction) {
       if (!interaction.isChatInputCommand()) return;
       if (interaction.commandName !== "button_test") return;
@@ -178,6 +178,7 @@ client.on("interactionCreate", async interaction => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
