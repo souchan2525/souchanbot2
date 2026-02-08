@@ -163,6 +163,10 @@ client.on("interactionCreate", async interaction => {
   try {
     await command.execute(interaction);
   } catch (err) {
+    if (err.code === 10062) {
+      console.error("エラーだけど動くなら問題ないお")
+      return;
+    }
     console.error(err);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
@@ -181,6 +185,7 @@ client.once("clientReady", () => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
