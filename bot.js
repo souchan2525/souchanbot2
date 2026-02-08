@@ -174,12 +174,14 @@ client.on("interactionCreate", async interaction => {
 
 client.once("clientReady", () => {
   console.log("✅botが起動したよ！")
+  setTimeout(() => console.log("ウォームアップしといたよ！"), 3000);
 })
 
 // ===============================
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
