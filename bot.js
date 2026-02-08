@@ -136,7 +136,7 @@ const commands = [
 // ===============================
 const rest = new REST({ version: "10" }).setToken(process.env.token);
 
-(async () => {
+/* (async () => {
   try {
     console.log("🔄 スラッシュコマンドを Discord に登録中…");
 
@@ -149,7 +149,7 @@ const rest = new REST({ version: "10" }).setToken(process.env.token);
   } catch (err) {
     console.error("❌ コマンド登録中にエラー:", err);
   }
-})();
+})(); */
 
 // ===============================
 //  コマンド実行
@@ -181,6 +181,7 @@ client.once("clientReady", () => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
