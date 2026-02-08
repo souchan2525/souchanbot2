@@ -73,7 +73,7 @@ const commands = [
         const data = await link.json();
     
         if (data.cod !== 200) {
-          return await interaction.editReply("その都市の天気が見つかりませんでした...");
+          return await interaction.reply("その都市の天気が見つかりませんでした...");
         }
     
         const embed = new EmbedBuilder()
@@ -98,10 +98,10 @@ const commands = [
             inline: true
           });
     
-          await interaction.editReply("送信します！");
+          await interaction.reply("送信します！");
           await interaction.followUp({ embeds: [embed] });
         } else {
-          await interaction.editReply({ embeds: [embed], ephemeral: false });
+          await interaction.reply({ embeds: [embed], ephemeral: false });
         }
       } catch (er) {
         console.error(er);
@@ -185,6 +185,7 @@ client.once("clientReady", () => {
 //  ログイン
 // ===============================
 client.login(process.env.token);
+
 
 
 
