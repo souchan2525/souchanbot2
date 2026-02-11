@@ -103,7 +103,19 @@ const commands = [
         components: [row]
       })
     }
-  }
+  },
+
+  /* {
+    name: role_roulette,
+    async execute(interaction) {
+      const randint = (min, max) => {
+        return Math.floor(Math.random() * max - 1) + min
+      }
+      const role = interaction.options.getRole("role")
+      await interaction.menber.roles.remove(role)
+      const roles = []
+    }
+  } */
 ];
 
 //  スラッシュコマンド登録
@@ -118,7 +130,7 @@ client.on("interactionCreate", async interaction => {
   if (interaction.isButton()) {
     if (interaction.customId === "commandhelp") {
       const embed = new EmbedBuilder()
-        .setTitle("ヘルプ")
+        .setTitle("コマンドヘルプ")
         .addFields(
           { name: "message", value: "メッセージを送信するよ！" },
           { name: "ping", value: "botの生存確認をするよ！" },
@@ -157,4 +169,5 @@ app.listen(3000, () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
