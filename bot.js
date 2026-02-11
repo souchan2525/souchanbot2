@@ -1,6 +1,8 @@
 require("dotenv").config();
 const { Client, GatewayIntentBits, Collection, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { createClient } = require("@supabase/supabase-js");
+const express = require("express");
+const app = express();
 
 // Supabase
 const supabase = createClient(process.env.baseurl, process.env.basekey);
@@ -145,8 +147,13 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
+app.get("/", (req, res) => {
+  res.send("Bot is running!");
+});
+
+app.listen(3000, () => {
+  console.log("Web server is running on port 3000");
+});
+
 //  ログイン
 client.login(process.env.token);
-
-
-
