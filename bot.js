@@ -128,7 +128,7 @@ client.on("interactionCreate", async interaction => {
     } else if (interaction.customId === "bothelp") {
       const embed = new EmbedBuilder()
         .setTitle("Botヘルプ")
-        .setDescription("このbotはJavaScriptで作られたbotだよ！\nそのうちもう1つのbotに移行する予定だよ！")
+        .setDescription("このbotはJavaScriptで作られたbotだよ！\n雑ですがソースコードはこちら\nhttps://github.com/souchan2525/souchanbot2/")
         .setColor("LightGrey")
       await interaction.reply({ ephemeral: true, embeds: [embed] });
     }
@@ -157,3 +157,4 @@ client.on("interactionCreate", async interaction => {
 
 //  ログイン
 client.login(process.env.token);
+
