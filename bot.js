@@ -136,11 +136,6 @@ client.on("interactionCreate", async interaction => {
 
   if (!interaction.isChatInputCommand()) return;
   const command = commands.find(c => c.name === interaction.commandName);
-  if (commands.find(c => c.name === "user")) {
-    if (interaction.user.id !== process.env.ownerId) {
-      return await interaction.reply({ content: "このコマンドはbot管理者専用だよ！", ephemeral: true });
-    }
-  }
   if (!command) return;
 
   try {
@@ -157,4 +152,5 @@ client.on("interactionCreate", async interaction => {
 
 //  ログイン
 client.login(process.env.token);
+
 
