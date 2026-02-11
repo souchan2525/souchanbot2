@@ -31,7 +31,7 @@ const commands = [
   {
     name: "ping",
     async execute(interaction) {
-      interaction.reply("pong!\nbotは生きてるよ！");
+      await interaction.reply("pong!\nbotは生きてるよ！");
     }
 
   },
@@ -157,3 +157,4 @@ app.listen(3000, () => {
 
 //  ログイン
 client.login(process.env.token);
+
