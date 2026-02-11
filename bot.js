@@ -142,15 +142,11 @@ client.on("interactionCreate", async interaction => {
     await command.execute(interaction);
   } catch (err) {
     console.error(err);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
-    } else {
-      await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
-    }
   }
 });
 
 //  ログイン
 client.login(process.env.token);
+
 
 
