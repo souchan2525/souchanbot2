@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { Client, GatewayIntentBits, Collection, REST, Routes, SlashCommandBuilder, EmbedBuilder } = require("discord.js");
+const { Client, GatewayIntentBits, Collection, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { createClient } = require("@supabase/supabase-js");
 
 // Supabase
@@ -14,52 +14,28 @@ const client = new Client({
   ]
 });
 
-// ===============================
 //  スラッシュコマンド一覧
-// ===============================
+// const guildcommand = []
 const commands = [
   {
-    data: new SlashCommandBuilder()
-      .setName("message")
-      .setDescription("メッセージを言ってくれるよ！")
-      .addStringOption(o => o.setName("text").setDescription("言わせたい内容").setRequired(true)),
+    name: "message",
     async execute(interaction) {
-      await interaction.deferReply({ flags: 64 });
       const text = interaction.options.getString("text");
-      await interaction.reply(text);
+      await interaction.reply({ content: "送信します！", ephemeral: true });
+      await interaction.followUp({ content: text });
     }
   },
 
   {
-    data: new SlashCommandBuilder()
-      .setName("ping")
-      .setDescription("botが生きてるか確認できるよ！"),
+    name: "ping",
     async execute(interaction) {
-      const sent = await interaction.reply({ content: "計測中...", fetchReply: true });
-      const ping = sent.createdTimestamp - interaction.createdTimestamp;
-      const apiPing = interaction.client.ws.ping;
-      await interaction.editReply(`🏓 Pong!\n応答速度: ${ping}ms\nAPI: ${apiPing}ms`);
+      interaction.reply("pong!\nbotは生きてるよ！");
     }
+
   },
 
   {
-    data: new SlashCommandBuilder()
-      .setName("weather")
-      .setDescription("お天気を教えてくれるよ！")
-      .addStringOption(o =>
-        o.setName("city")
-          .setDescription("都市名（ローマ字）")
-          .setRequired(true)
-      )
-      .addStringOption(o =>
-        o.setName("bool")
-          .setDescription("都市名を伏せる？")
-          .setRequired(true)
-          .setChoices(
-            { name: "伏せる", value: "true" },
-            { name: "伏せない", value: "false" }
-          )
-      ),
+    name: "weather",
     async execute(interaction) {
       try {    
         const city = interaction.options.getString("city");
@@ -85,7 +61,7 @@ const commands = [
             { name: "湿度", value: `💧 ${data.main.humidity}%`, inline: true },
             { name: "風速", value: `💨 ${data.wind.speed}m/s`, inline: true },
             { name: "日の出", value: `🌄 <t:${data.sys.sunrise}:T>`, inline: true },
-            { name: "日の入り", value: `:sunset: <t:${data.sys.sunset}:T>`, inline: true }
+            { name: "日の入り", value: `🌅 <t:${data.sys.sunset}:T>`, inline: true }
           )
           .setFooter({ text: "提供元:OpenWeatherMap" });
     
@@ -96,7 +72,7 @@ const commands = [
             inline: true
           });
     
-          await interaction.reply("送信します！");
+          await interaction.reply({ content: "送信します！", ephemeral: true });
           await interaction.followUp({ embeds: [embed] });
         } else {
           await interaction.reply({ embeds: [embed], ephemeral: false });
@@ -104,114 +80,80 @@ const commands = [
       } catch (er) {
         console.error(er);
         try {
-          await interaction.followUp({ content: "送信に失敗しました...", flags: 64 });
-        } catch {}
+          await interaction.reply({ content: "送信に失敗しました...", ephemeral: true });
+        } catch {} // エラーなんて握りつぶしちゃえ！（雑）
       }
     }
   },
   // ボタン
   {
-    data: new SlashCommandBuilder().setName("button_test")
-      .setDescription("お試しボタン"),
+    name: "help_button",
     async execute(interaction) {
-      const button1 = new ButtonBuilder().setCustomId("button1")
-        .setLabel("お試しボタン1")
+      const help = new ButtonBuilder().setCustomId("commandhelp")
+        .setLabel("コマンドヘルプ")
         .setStyle(ButtonStyle.Primary)
-      const button2 = new ButtonBuilder().setCustomId("button2")
-        .setLabel("お試しボタン2")
+      const help2 = new ButtonBuilder().setCustomId("bothelp")
+        .setLabel("botヘルプ")
         .setStyle(ButtonStyle.Success)
-      const row = new ActionRowBuilder().addComponents(button1, button2)
+      const row = new ActionRowBuilder().addComponents(help, help2)
       await interaction.reply({
-        content: "これはボタンのテストだよ！",
+        content: "ヘルプメニュー↓",
         components: [row]
       })
     }
   }
 ];
 
-// ===============================
 //  スラッシュコマンド登録
-// ===============================
 const rest = new REST({ version: "10" }).setToken(process.env.token);
 
-/* (async () => {
-  try {
-    console.log("🔄 スラッシュコマンドを Discord に登録中…");
+client.once("clientReady", () => {
+  console.log("Botが起動したよ！");
+});
 
-    await rest.put(
-      Routes.applicationCommands(process.env.clientid),
-      { body: commands.map(cmd => cmd.data.toJSON()) }
-    );
-
-    console.log("✅ スラッシュコマンド登録完了！");
-  } catch (err) {
-    console.error("❌ コマンド登録中にエラー:", err);
-  }
-})(); */
-
-// ===============================
 //  コマンド実行
-// ===============================
 client.on("interactionCreate", async interaction => {
-  if (!interaction.isChatInputCommand()) return;
+  if (interaction.isButton()) {
+    if (interaction.customId === "commandhelp") {
+      const embed = new EmbedBuilder()
+        .setTitle("ヘルプ")
+        .addFields(
+          { name: "message", value: "メッセージを送信するよ！" },
+          { name: "ping", value: "botの生存確認をするよ！" },
+          { name: "weather", value: "指定した都市の天気を表示するよ！" },
+          { name: "help_button", value: "これを表示するよ！" }
+        )
+        .setColor("Gold")
+      await interaction.reply({ ephemeral: true, embeds: [embed] });
+    } else if (interaction.customId === "bothelp") {
+      const embed = new EmbedBuilder()
+        .setTitle("Botヘルプ")
+        .setDescription("このbotはJavaScriptで作られたbotだよ！\nそのうちもう1つのbotに移行する予定だよ！")
+        .setColor("LightGrey")
+      await interaction.reply({ ephemeral: true, embeds: [embed] });
+    }
+  }
 
-  const command = commands.find(c => c.data.name === interaction.commandName);
+  if (!interaction.isChatInputCommand()) return;
+  const command = commands.find(c => c.name === interaction.commandName);
+  if (commands.find(c => c.name === "user")) {
+    if (interaction.user.id !== process.env.ownerId) {
+      return await interaction.reply({ content: "このコマンドはbot管理者専用だよ！", ephemeral: true });
+    }
+  }
   if (!command) return;
 
   try {
     await command.execute(interaction);
   } catch (err) {
-    if (err.code === 10062) {
-      console.error("エラーだけど動くなら問題ないお")
-      return;
-    }
     console.error(err);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
     } else {
-      await interaction.followUp({ content: "エラーが発生しました...", ephemeral: true });
+      await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
     }
   }
 });
 
-client.once("clientReady", () => {
-  console.log("✅botが起動したよ！")
-  setTimeout(() => console.log("ウォームアップしといたよ！"), 3000);
-})
-
-// ===============================
 //  ログイン
-// ===============================
 client.login(process.env.token);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
