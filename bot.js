@@ -105,7 +105,7 @@ const commands = [
     }
   },
 
-  /* {
+  {
     name: role_roulette,
     async execute(interaction) {
       const randint = (min, max) => {
@@ -113,9 +113,20 @@ const commands = [
       }
       const role = interaction.options.getRole("role")
       await interaction.menber.roles.remove(role)
-      const roles = []
+      const roles = [
+        1425982074992464024, 1425982078239113415, 1425982096773615627,
+        1425982100091310110
+      ]
+      const rand = roles[randint(0, roles.length)]
+      await interaction.menber.roles.add(rand)
+      const embed = new EmbedBuilder().setTitle("ルーレット結果！")
+        .addFields(
+          { name: "ルーレット前", value: `<@${role}>`, inline: true },
+          { name: "ルーレット後", value: `<@${rand}>`, inline: true }
+        )
+      await interaction.reply({ embeds: [embed] })
     }
-  } */
+  }
 ];
 
 //  スラッシュコマンド登録
@@ -169,5 +180,6 @@ app.listen(3000, () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
 
