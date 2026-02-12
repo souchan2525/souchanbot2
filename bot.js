@@ -166,6 +166,12 @@ client.on("interactionCreate", async interaction => {
   try {
     await command.execute(interaction);
   } catch (err) {
+    if (err.code === 50013) {
+      interaction.reply({
+        content: "権限が足りないよ！", ephemeral: true
+      })
+      return;
+    }
     console.error(err);
   }
 });
@@ -180,6 +186,7 @@ app.listen(3000, () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
 
 
