@@ -112,13 +112,13 @@ const commands = [
         return Math.floor(Math.random() * max - 1) + min
       }
       const role = interaction.options.getRole("role")
-      await interaction.menber.roles.remove(role)
+      await interaction.member.roles.remove(role)
       const roles = [
         1425982074992464024, 1425982078239113415, 1425982096773615627,
         1425982100091310110
       ]
       const rand = roles[randint(0, roles.length)]
-      await interaction.menber.roles.add(rand)
+      await interaction.member.roles.add(rand)
       const embed = new EmbedBuilder().setTitle("ルーレット結果！")
         .addFields(
           { name: "ルーレット前", value: `<@${role}>`, inline: true },
@@ -180,6 +180,7 @@ app.listen(3000, () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
 
 
