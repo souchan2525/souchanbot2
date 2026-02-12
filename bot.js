@@ -106,7 +106,7 @@ const commands = [
   },
 
   {
-    name: role_roulette,
+    name: "role_roulette",
     async execute(interaction) {
       const randint = (min, max) => {
         return Math.floor(Math.random() * max - 1) + min
@@ -180,6 +180,7 @@ app.listen(3000, () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
 
 
