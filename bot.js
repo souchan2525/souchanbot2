@@ -12,9 +12,22 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ],
+  partials: ['GUILD_MEMBER', 'USER', 'MESSAGE']
 });
+
+const roles = {
+  "1422491800677126257": [
+    "1425982074992464024", "1425982078239113415", "1425982096773615627",
+    "1425982100091310110"
+  ],
+  "1238284055540138005": [
+    "1380458612756844718", "1401859345141993563", "1395987264915374181",
+    "1397509114602459217", "1395912754828804167"
+  ]
+}
 
 //  スラッシュコマンド一覧
 // const guildcommand = []
@@ -108,22 +121,38 @@ const commands = [
   {
     name: "role_roulette",
     async execute(interaction) {
-      const randint = (min, max) => {
-        return Math.floor(Math.random() * max - 1) + min
+      try {
+        const randint = max => Math.floor(Math.random() * max);
+        const serverid = interaction.guildId
+        const newrole = roles[serverid][randint(roles[serverid].length)]
+        const oldrole = interaction.options.getRole("role")
+        if (!interaction.member.roles.cache.has(oldrole.id)) {
+          await interaction.reply({ content: "そのロールを持っていません！", ephemeral: true })
+          return;
+        }
+        interaction.member.roles.remove(oldrole)
+        await interaction.member.roles.add(newrole)
+        const embed = new EmbedBuilder().setTitle("ルーレットロール結果")
+          .addFields(
+            { name: "ルーレット前", value: `${oldrole}`, inline: true },
+            { name: "ルーレット後", value: `<@&${newrole}>`, inline: true }
+          )
+          .setColor("Gold")
+        await interaction.reply({ embeds: [embed] })
+      } catch (error) {
+        console.error(error);
+        await interaction.reply({ content: "ロールの操作に失敗しました..." });
       }
-      const role = interaction.options.getRole("role")
-      await interaction.member.roles.remove(role)
-      const roles = [
-        1425982074992464024, 1425982078239113415, 1425982096773615627,
-        1425982100091310110
-      ]
-      const rand = roles[randint(0, roles.length)]
-      await interaction.member.roles.add(String(rand))
-      const embed = new EmbedBuilder().setTitle("ルーレット結果！")
-        .addFields(
-          { name: "ルーレット前", value: `<@${role}>`, inline: true },
-          { name: "ルーレット後", value: `<@${rand}>`, inline: true }
-        )
+    }
+  },
+
+  {
+    name: "role_list",
+    async execute(interaction) {
+      const serverid = interaction.guild.id
+      const embed = new EmbedBuilder().setTitle("ルーレットロールリスト")
+        .setDescription(roles[serverid].map(r => `<@&${r}>`).join("\n"))
+        .setColor("Gold")
       await interaction.reply({ embeds: [embed] })
     }
   }
@@ -186,10 +215,3 @@ app.listen(3000, () => {
 
 //  ログイン
 client.login(process.env.token);
-
-
-
-
-
-
-
