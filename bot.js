@@ -4,6 +4,8 @@ const { createClient } = require("@supabase/supabase-js");
 const express = require("express");
 const app = express();
 
+// @ts-check
+
 // Supabase
 const supabase = createClient(process.env.baseurl, process.env.basekey);
 
@@ -19,13 +21,37 @@ const client = new Client({
 });
 
 const roles = {
-  "1422491800677126257": [
-    "1425982074992464024", "1425982078239113415", "1425982096773615627",
+  "1422491800677126257": [ // そうちゃんのbotテストサーバー
+    "1425982074992464024",
+    "1425982078239113415",
+    "1425982096773615627",
     "1425982100091310110"
   ],
-  "1238284055540138005": [
-    "1380458612756844718", "1401859345141993563", "1395987264915374181",
-    "1397509114602459217", "1395912754828804167"
+  "1238284055540138005": [ // そうちゃんのメモサーバー
+    "1380458612756844718", // 管理者スター
+    "1401859345141993563", // スーパーサンタ
+    "1395987264915374181", // クリーナー
+    "1397509114602459217", // オポチュニスト
+    "1395912754828804167", // シェリフ
+    "1405225584782479462", // えろちゃん
+    "1400754171875033148", // ろずちゃん
+    "1411540082741215383", // ばなな
+    "1397513572841422848", // スリーパー
+    "1395986374515101808", // メイヤー
+    "1395939165165715576", // ムービング
+    "1395926946298335232", // サンタ
+    "1395237730987933746", // フリーター
+  ],
+  "1368668472942264400": [ // おいしい鯖
+    "1406143372850106429", // ホモ
+    "1394333614711378092", // キャンブラー
+    "1381291920692740146", // 虚言癖
+    "1376127246669971587", // 変態
+    "1375079323345747989", // マイクラ民
+    "1373657499361742959", // 知能がない人たち
+    "1407018662832898178", // 壊れちゃった人
+    "1381640923359744020", // ホラゲー
+    "1381632691375706162", // えろちゃん
   ]
 }
 
@@ -100,7 +126,7 @@ const commands = [
       }
     }
   },
-  // ボタン
+
   {
     name: "help_button",
     async execute(interaction) {
@@ -125,16 +151,20 @@ const commands = [
         const randint = max => Math.floor(Math.random() * max);
         const serverid = interaction.guildId
         const newrole = roles[serverid][randint(roles[serverid].length)]
-        const oldrole = interaction.options.getRole("role")
-        if (!interaction.member.roles.cache.has(oldrole.id)) {
+        if (!newrole) {
+          await interaction.reply({ content: "このサーバーのルーレットロール情報がありません！", ephemeral: true })
+          return;
+        }
+        const oldrole = interaction.options.getRole("role").id
+        if (!interaction.member.roles.cache.has(oldrole)) {
           await interaction.reply({ content: "そのロールを持っていません！", ephemeral: true })
           return;
         }
-        interaction.member.roles.remove(oldrole)
+        await interaction.member.roles.remove(oldrole)
         await interaction.member.roles.add(newrole)
         const embed = new EmbedBuilder().setTitle("ルーレットロール結果")
           .addFields(
-            { name: "ルーレット前", value: `${oldrole}`, inline: true },
+            { name: "ルーレット前", value: `<@&${oldrole}>`, inline: true },
             { name: "ルーレット後", value: `<@&${newrole}>`, inline: true }
           )
           .setColor("Gold")
@@ -155,39 +185,182 @@ const commands = [
         .setColor("Gold")
       await interaction.reply({ embeds: [embed] })
     }
+  },
+
+  {
+    name: "timer",
+    async execute(interaction) {
+      const time = interaction.options.getInteger("time");
+      const timer = new ButtonBuilder()
+        .setLabel("タイマー")
+        .setStyle(ButtonStyle.Link)
+        .setURL(`https://bot-timer.pages.dev/?sec=${time}`)
+      const row = new ActionRowBuilder().addComponents(timer);
+      const embed = new EmbedBuilder()
+        .setTitle(`${time}秒タイマーの用意完了！`)
+        .setDescription("↓のリンクからタイマーを使うことができます！")
+        .setColor("Gold");
+      await interaction.reply({
+        embeds: [embed], components: [row]
+      });
+    }
+  },
+
+  {
+    name: "commandhelp",
+    async execute(interaction) {
+      const embed = new EmbedBuilder()
+        .setTitle("コマンドヘルプ")
+        .setDescription("ページを選んでください")
+        .setColor("Gold");
+
+      const pageButtons = commandPages.map((_, i) => {
+        return new ButtonBuilder()
+          .setCustomId(`commandhelp_${i + 1}`)
+          .setLabel(`ページ${i + 1}`)
+          .setStyle(ButtonStyle.Primary);
+      });
+
+      const row = new ActionRowBuilder().addComponents(pageButtons);
+
+      await interaction.reply({
+        embeds: [embed],
+        components: [row],
+        ephemeral: true
+      });
+    }
   }
 ];
+
+let commandPages = [];
+
+async function loadCommandPages(client) {
+  const rest = new REST({ version: "10" }).setToken(process.env.token);
+  const set_command = await rest.get(
+    Routes.applicationCommands(client.user.id)
+  );
+
+  const chunk = (arr, size) => {
+    const chunks = [];
+    for (let i = 0; i < arr.length; i += size) {
+      chunks.push(arr.slice(i, i + size));
+    }
+    return chunks;
+  };
+
+  commandPages = chunk(set_command, 4);
+}
+
+
+const buttons = [
+  {
+    name: "commandhelp",
+    async execute(interaction) {
+      const embed = new EmbedBuilder()
+        .setTitle("コマンドヘルプ")
+        .setDescription("ページを選んでください")
+        .setColor("Gold");
+
+      const pageButtons = commandPages.map((_, i) => {
+        return new ButtonBuilder()
+          .setCustomId(`commandhelp_${i + 1}`)
+          .setLabel(`ページ${i + 1}`)
+          .setStyle(ButtonStyle.Primary);
+      });
+
+      const row = new ActionRowBuilder().addComponents(pageButtons);
+
+      await interaction.reply({
+        embeds: [embed],
+        components: [row],
+        ephemeral: true
+      });
+    }
+  },
+
+  {
+    name: "commandhelp_page",
+    async execute(interaction) {
+      const page = Number(interaction.customId.split("_")[1]);
+      const commandsOnPage = commandPages[page - 1];
+
+      const embed = new EmbedBuilder()
+        .setTitle(`コマンドヘルプ - ページ${page}/${commandPages.length}`)
+        .setColor("Gold");
+
+      for (const command of commandsOnPage) {
+        embed.addFields({
+          name: command.name,
+          value: command.description ?? "説明なし",
+          inline: false
+        });
+      }
+
+      const pageButtons = commandPages.map((_, i) => {
+        return new ButtonBuilder()
+          .setCustomId(`commandhelp_${i + 1}`)
+          .setLabel(`ページ${i + 1}`)
+          .setStyle(ButtonStyle.Primary);
+      });
+
+      const row = new ActionRowBuilder().addComponents(pageButtons);
+
+      await interaction.update({
+        embeds: [embed],
+        components: [row]
+      });
+    }
+  },
+
+
+  {
+    name: "bothelp",
+    async execute(interaction) {
+      const embed = new EmbedBuilder()
+        .setTitle("Botヘルプ")
+        .setDescription("このbotはJavaScriptで作られたbotだよ！\n雑ですがソースコードはこちら\nhttps://github.com/souchan2525/souchanbot2/")
+        .setColor("LightGrey");
+
+      await interaction.reply({
+        ephemeral: true,
+        embeds: [embed]
+      });
+    }
+  },
+
+]
 
 //  スラッシュコマンド登録
 const rest = new REST({ version: "10" }).setToken(process.env.token);
 
-client.once("clientReady", () => {
-  console.log("Botが起動したよ！");
-});
-
 //  コマンド実行
 client.on("interactionCreate", async interaction => {
-  if (interaction.isButton()) {
-    if (interaction.customId === "commandhelp") {
-      const embed = new EmbedBuilder()
-        .setTitle("コマンドヘルプ")
-        .addFields(
-          { name: "message", value: "メッセージを送信するよ！" },
-          { name: "ping", value: "botの生存確認をするよ！" },
-          { name: "weather", value: "指定した都市の天気を表示するよ！" },
-          { name: "help_button", value: "これを表示するよ！" }
-        )
-        .setColor("Gold")
-      await interaction.reply({ ephemeral: true, embeds: [embed] });
-    } else if (interaction.customId === "bothelp") {
-      const embed = new EmbedBuilder()
-        .setTitle("Botヘルプ")
-        .setDescription("このbotはJavaScriptで作られたbotだよ！\n雑ですがソースコードはこちら\nhttps://github.com/souchan2525/souchanbot2/")
-        .setColor("LightGrey")
-      await interaction.reply({ ephemeral: true, embeds: [embed] });
-    }
-  }
+  if (!interaction.isButton()) return;
 
+  const base = interaction.customId.split("_")[0];
+
+  // commandhelp_1 → commandhelp_page に変換
+  const name = base === "commandhelp" && interaction.customId.includes("_")
+    ? "commandhelp_page"
+    : base;
+
+  const button = buttons.find(b => b.name === name);
+  if (!button) return;
+
+  try {
+    await button.execute(interaction);
+  } catch (err) {
+    if (err.code === 50013) {
+      return interaction.reply({
+        content: "権限が足りないよ！",
+        ephemeral: true
+      });
+    }
+    console.error(err);
+  }
+});
+
+client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
   const command = commands.find(c => c.name === interaction.commandName);
   if (!command) return;
@@ -205,12 +378,19 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
+/*
 app.get("/", (req, res) => {
   res.send("Bot is running!");
 });
 
 app.listen(3000, () => {
   console.log("Web server is running on port 3000");
+});
+*/
+
+client.once("clientReady", async () => {
+  console.log("Botが起動したよ！");
+  await loadCommandPages(client);
 });
 
 //  ログイン
