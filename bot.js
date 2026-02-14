@@ -229,6 +229,50 @@ const commands = [
         ephemeral: true
       });
     }
+  },
+
+  {
+    name: "balance",
+    async execute(interaction) {
+      const { data, error } = await supabase
+        .from("botmoney")
+        .select("money")
+        .eq("userid", interaction.user.id)
+        .single();
+      const money = data ? data.money : 0;
+      const embed = new EmbedBuilder()
+        .setTitle(`${interaction.user.username}さんの持ち物`)
+        .setDescription(`所持金: ${money}コイン`)
+        .setColor("Gold")
+        .setFooter({ text: "持ち物管理: supabase" })
+      await interaction.reply({ embeds: [embed] });
+    }
+  },
+
+  {
+    name: "poll",
+    async execute(interaction) {
+      const question = interaction.options.getString("question").split(", ");
+      const title = interaction.options.getString("title") ?? "投票";
+      if (question.length > 5) {
+        await interaction.reply({ content: "選択肢は5つまでだよ！", ephemeral: true });
+        return;
+      }
+      const embed = new EmbedBuilder()
+        .setTitle(title)
+        .setDescription(question.map((q, i) => `${i + 1}. ${q} - 0票`).join("\n"))
+        .setColor("Gold")
+        .setFooter({ text: "何度でも投票できるよ！" });
+      const emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"];
+      const buttons = question.map((_, i) => {
+        return new ButtonBuilder()
+          .setCustomId(`poll_${interaction.id}_${i}`)
+          .setEmoji(emojis[i])
+          .setStyle(ButtonStyle.Primary);
+      });
+      const row = new ActionRowBuilder().addComponents(buttons);
+      await interaction.reply({ embeds: [embed], components: [row] });
+    }
   }
 ];
 
@@ -307,7 +351,29 @@ const buttons = [
 
       await interaction.update({
         embeds: [embed],
-        components: [row]
+        components: [row],
+        setFooter: { text: "何度でも投票できるよ！" }
+      });
+    }
+  },
+
+  {
+    name: "poll_vote",
+    async execute(interaction) {
+      const [_, pollId, option] = interaction.customId.split("_");
+      const message = await interaction.channel.messages.fetch(interaction.message.id);
+      const embed = message.embeds[0];
+      const description = embed.description.split("\n");
+      const optionI = Number(option);
+      const line = description[optionI];
+      const match = line.match(/(\d+)票/);
+      const currentVotes = match ? parseInt(match[1]) : 0;
+      const newVotes = currentVotes + 1;
+      description[optionI] = line.replace(/(\d+)票/, `${newVotes}票`);
+      const newEmbed = EmbedBuilder.from(embed)
+        .setDescription(description.join("\n"));
+      await interaction.update({
+        embeds: [newEmbed]
       });
     }
   },
@@ -342,6 +408,8 @@ client.on("interactionCreate", async interaction => {
   // commandhelp_1 → commandhelp_page に変換
   const name = base === "commandhelp" && interaction.customId.includes("_")
     ? "commandhelp_page"
+    : base === "poll" && interaction.customId.startsWith("poll_")
+    ? "poll_vote"
     : base;
 
   const button = buttons.find(b => b.name === name);
@@ -377,6 +445,74 @@ client.on("interactionCreate", async interaction => {
     console.error(err);
   }
 });
+
+client.on("messageCreate", async message => {
+  try {
+    if (message.author.bot || !message.guild) return;
+    if (message.content.startsWith("!")) return;
+    const userId = String(message.author.id);
+    let addMoney = ((message.content?.length ?? 0) - 5) * 15;
+    if (message.content?.length < 5) addMoney = 0;
+    if (addMoney > 200) addMoney = 200;
+    if (addMoney === 0) return;
+
+    const { data, error } = await supabase
+      .from("botmoney")
+      .select("money")
+      .eq("userid", userId)
+      .single();
+
+    if (error && error.code === "PGRST116") {
+      const { error: insertError } = await supabase
+        .from("botmoney")
+        .insert({ userid: userId, money: addMoney });
+      
+      if (insertError) console.error("Insert Error:", insertError);
+      return;
+    }
+
+    if (error) {
+      console.error("Select Error:", error);
+      return;
+    }
+
+    const newBalance = Number(data.money) + addMoney;
+
+    const { error: updateError } = await supabase
+      .from("botmoney")
+      .update({ money: newBalance })
+      .eq("userid", userId);
+
+    if (updateError) console.error("Update Error:", updateError);
+  } catch (err) {
+    if (err.code === 50013) {
+      interaction.reply({
+        content: "権限が足りないよ！", ephemeral: true
+      })
+      return;
+    }
+    console.error(err);
+  }
+});
+
+client.on("messageCreate", async message => {
+  try {
+    if (message.author.bot) return;
+    if (message.content.startsWith("!message")) {
+      const text = message.content.split(" ")[1]
+      await message.delete()
+      await message.channel.send(text)
+    }
+  } catch (err) {
+    if (err.code === 50013) {
+      interaction.reply({
+        content: "権限が足りないよ！", ephemeral: true
+      })
+      return;
+    }
+    console.error(err);
+  }
+})
 
 /*
 app.get("/", (req, res) => {
