@@ -1,8 +1,8 @@
 require("dotenv").config();
 const { Client, GatewayIntentBits, Collection, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
 const { createClient } = require("@supabase/supabase-js");
-const express = require("express");
-const app = express();
+/* const express = require("express");
+const app = express(); */
 
 // @ts-check
 
@@ -531,3 +531,4 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
