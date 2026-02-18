@@ -457,19 +457,10 @@ client.on("messageCreate", async message => {
     if (addMoney === 0) return;
 
     const { data, error } = await supabase
-      .from("botmoney")
+      .from("userinfo")
       .select("money")
       .eq("userid", userId)
       .single();
-
-    if (error && error.code === "PGRST116") {
-      const { error: insertError } = await supabase
-        .from("botmoney")
-        .insert({ userid: userId, money: addMoney });
-      
-      if (insertError) console.error("Insert Error:", insertError);
-      return;
-    }
 
     if (error) {
       console.error("Select Error:", error);
@@ -478,12 +469,12 @@ client.on("messageCreate", async message => {
 
     const newBalance = Number(data.money) + addMoney;
 
-    const { error: updateError } = await supabase
-      .from("botmoney")
-      .update({ money: newBalance })
+    const { error: upsertError } = await supabase
+      .from("userinfo")
+      .upsert({ money: newBalance })
       .eq("userid", userId);
 
-    if (updateError) console.error("Update Error:", updateError);
+    if (upsertError) console.error("Update Error:", upsertError);
   } catch (err) {
     if (err.code === 50013) {
       interaction.reply({
@@ -498,7 +489,7 @@ client.on("messageCreate", async message => {
 client.on("messageCreate", async message => {
   try {
     if (message.author.bot) return;
-    if (message.content.startsWith("!message")) {
+    if (message.content.startsWith("!message ")) {
       const text = message.content.split(" ")[1]
       await message.delete()
       await message.channel.send(text)
@@ -529,5 +520,6 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
 
