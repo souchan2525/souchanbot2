@@ -235,7 +235,7 @@ const commands = [
     name: "balance",
     async execute(interaction) {
       const { data, error } = await supabase
-        .from("botmoney")
+        .from("userinfo")
         .select("money")
         .eq("userid", interaction.user.id)
         .single();
@@ -520,6 +520,7 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
 
 
