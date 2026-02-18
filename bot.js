@@ -471,7 +471,10 @@ client.on("messageCreate", async message => {
 
     const { error: upsertError } = await supabase
       .from("userinfo")
-      .upsert({ money: newBalance })
+      .upsert({
+        userid: userId,
+        money: newBalance
+      })
       .eq("userid", userId);
 
     if (upsertError) console.error("Update Error:", upsertError);
@@ -520,6 +523,7 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
 
 
