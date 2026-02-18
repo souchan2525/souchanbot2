@@ -15,7 +15,8 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMessageReactions
   ],
   partials: ['GUILD_MEMBER', 'USER', 'MESSAGE']
 });
@@ -232,17 +233,40 @@ const commands = [
   },
 
   {
-    name: "balance",
+    name: "inventory",
     async execute(interaction) {
+      const user = interaction.options.getString("user") ?? interaction.user.id;
       const { data, error } = await supabase
         .from("userinfo")
         .select("money")
-        .eq("userid", interaction.user.id)
-        .single();
-      const money = data ? data.money : 0;
+        .eq("userid", user)
+        .maybeSingle();
+      if (error) {
+        console.error(error);
+        await interaction.reply({ content: "所持金の情報の取得に失敗しました...", ephemeral: true });
+        return;
+      }
+      const { data: boost, error: boostError } = await supabase
+        .from("userinfo")
+        .select("total_boost")
+        .eq("userid", user)
+        .maybeSingle();
+      if (boostError) {
+        console.error(boostError);
+        await interaction.reply({ content: "ブーストの情報の取得に失敗しました...", ephemeral: true });
+        return;
+      }
+      let money = data ? data.money : 0;
+      let total_boost = boost ? boost.total_boost : 0;
+      if (money == null) money = 0;
+      if (total_boost == null) total_boost = 0;
+      const username = await interaction.client.users.fetch(user).catch(() => null);
       const embed = new EmbedBuilder()
-        .setTitle(`${interaction.user.username}さんの持ち物`)
-        .setDescription(`所持金: ${money}コイン`)
+        .setTitle(`${username ? username.username : user}さんの持ち物`)
+        .setDescription(`
+          所持金: ${money}コイン
+          総ブースト数<:boost:1473607538426773525>: ${total_boost}
+        `)
         .setColor("Gold")
         .setFooter({ text: "持ち物管理: supabase" })
       await interaction.reply({ embeds: [embed] });
@@ -272,6 +296,71 @@ const commands = [
       });
       const row = new ActionRowBuilder().addComponents(buttons);
       await interaction.reply({ embeds: [embed], components: [row] });
+    }
+  },
+
+  {
+    name: "boost",
+    async execute(interaction) {
+      try {
+        let { data: boost, berror } = await supabase // サーバーのブースト数を取得
+          .from("boost")
+          .select("boost_num")
+          .eq("serverid", interaction.guildId)
+          .single();
+        boost = boost ?? { boost_num: 0 };
+        if (berror) {
+          console.error(berror);
+          return;
+        }
+        let { data: money, error: uerror } = await supabase // ユーザーの所持金を取得
+          .from("userinfo")
+          .select("money")
+          .eq("userid", interaction.user.id)
+          .single();
+        money = money ?? { money: 0 };
+        if (uerror) {
+          console.error(uerror);
+          return;
+        }
+        let { data: myboost, error: mberror } = await supabase // ユーザーの総ブースト数を取得
+          .from("userinfo")
+          .select("total_boost")
+          .eq("userid", interaction.user.id)
+          .single();
+        myboost = myboost ?? { total_boost: 0 };
+        if (mberror) {
+          console.error(mberror);
+          return;
+        }
+        const { error: userror } = await supabase // ブースト数を更新
+          .from("boost")
+          .upsert({ serverid: interaction.guildId, boost_num: boost.boost_num + 1 })
+        if (userror) {
+          console.error(userror)
+          return
+        }
+        const { error: userror2 } = await supabase // ユーザーの所持金を更新 + ユーザーの総ブースト数を更新
+          .from("userinfo")
+          .upsert({
+            userid: interaction.user.id,
+            money: money.money - 1000,
+            total_boost: myboost.total_boost + 1
+          })
+        if (userror2) {
+          console.error(userror2)
+          return
+        }
+        const embed = new EmbedBuilder()
+          .setTitle("ブースト！")
+          .setDescription(`現在のブースト数<:boost:1473607538426773525>: ${boost.boost_num + 1}`)
+          .setColor("Gold")
+          .setFooter({ text: "ブースト管理: supabase" })
+        await interaction.reply({ embeds: [embed] });
+      } catch (error) {
+        console.error(error);
+        await interaction.reply({ content: "ブーストに失敗しました..." });
+      }
     }
   }
 ];
@@ -455,20 +544,16 @@ client.on("messageCreate", async message => {
     if (message.content?.length < 5) addMoney = 0;
     if (addMoney > 200) addMoney = 200;
     if (addMoney === 0) return;
-
     const { data, error } = await supabase
       .from("userinfo")
       .select("money")
       .eq("userid", userId)
       .single();
-
     if (error) {
       console.error("Select Error:", error);
       return;
     }
-
     const newBalance = Number(data.money) + addMoney;
-
     const { error: upsertError } = await supabase
       .from("userinfo")
       .upsert({
@@ -476,7 +561,6 @@ client.on("messageCreate", async message => {
         money: newBalance
       })
       .eq("userid", userId);
-
     if (upsertError) console.error("Update Error:", upsertError);
   } catch (err) {
     if (err.code === 50013) {
@@ -492,7 +576,7 @@ client.on("messageCreate", async message => {
 client.on("messageCreate", async message => {
   try {
     if (message.author.bot) return;
-    if (message.content.startsWith("!message ")) {
+    if (message.content.startsWith("!message")) {
       const text = message.content.split(" ")[1]
       await message.delete()
       await message.channel.send(text)
@@ -523,8 +607,3 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
-
-
-
-
-
