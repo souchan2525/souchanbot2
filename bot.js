@@ -264,8 +264,8 @@ const commands = [
       const embed = new EmbedBuilder()
         .setTitle(`${username ? username.username : user}さんの持ち物`)
         .setDescription(`
-          所持金: ${money}コイン
-          総ブースト数<:boost:1473607538426773525>: ${total_boost}
+所持金💰: ${money}コイン
+総ブースト数<:boost:1473607538426773525>: ${total_boost}
         `)
         .setColor("Gold")
         .setFooter({ text: "持ち物管理: supabase" })
@@ -607,3 +607,4 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
