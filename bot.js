@@ -195,7 +195,7 @@ const commands = [
       const timer = new ButtonBuilder()
         .setLabel("タイマー")
         .setStyle(ButtonStyle.Link)
-        .setURL(`https://bot-timer.pages.dev/?sec=${time}`)
+        .setURL(`https://souchan-bot.pages.dev/timer/?sec=${time}`)
       const row = new ActionRowBuilder().addComponents(timer);
       const embed = new EmbedBuilder()
         .setTitle(`${time}秒タイマーの用意完了！`)
@@ -607,4 +607,5 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
