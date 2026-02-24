@@ -804,7 +804,7 @@ client.on("interactionCreate", async interaction => {
     await button.execute(interaction);
   } catch (err) {
     if (err.code === 50013) {
-      return interaction.reply({
+      return await interaction.reply({
         content: "権限が足りないよ！",
         ephemeral: true
       });
@@ -823,7 +823,7 @@ client.on("interactionCreate", async interaction => {
     await command.execute(interaction);
   } catch (err) {
     if (err.code === 50013) {
-      interaction.reply({
+      await interaction.reply({
         content: "権限が足りないよ！", ephemeral: true
       })
       return;
@@ -841,7 +841,7 @@ client.on("interactionCreate", async interaction => {
     await modal.execute(interaction);
   } catch (err) {
     if (err.code === 50013) {
-      interaction.reply({
+      await interaction.reply({
         content: "権限が足りないよ！", ephemeral: true
       })
       return
@@ -930,3 +930,4 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
