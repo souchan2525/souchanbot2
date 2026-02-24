@@ -1,7 +1,23 @@
 require("dotenv").config();
-const { Client, GatewayIntentBits, Collection, REST, Routes, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require("discord.js");
+const {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  REST,
+  Routes,
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder, 
+  ButtonBuilder,
+  ButtonStyle,
+  ModalBuilder,
+  ActivityType,
+  TextInputBuilder,
+  TextInputStyle,
+} = require("discord.js");
 const { createClient } = require("@supabase/supabase-js");
 const express = require("express");
+const e = require("express");
 const app = express();
 
 // @ts-check
@@ -16,7 +32,9 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
-    GatewayIntentBits.GuildMessageReactions
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildWebhooks
   ],
   partials: ['GUILD_MEMBER', 'USER', 'MESSAGE']
 });
@@ -79,19 +97,19 @@ const commands = [
   {
     name: "weather",
     async execute(interaction) {
-      try {    
+      try {
         const city = interaction.options.getString("city");
         const bool = interaction.options.getString("bool");
-    
+
         const link = await fetch(
           `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.appid}&units=metric&lang=ja`
         );
         const data = await link.json();
-    
+
         if (data.cod !== 200) {
           return await interaction.reply("その都市の天気が見つかりませんでした...");
         }
-    
+
         const embed = new EmbedBuilder()
           .setColor("Gold")
           .setTitle("本日のお天気～！")
@@ -106,14 +124,14 @@ const commands = [
             { name: "日の入り", value: `🌅 <t:${data.sys.sunset}:T>`, inline: true }
           )
           .setFooter({ text: "提供元:OpenWeatherMap" });
-    
+
         if (bool === "true") {
           embed.spliceFields(0, 1, {
             name: "都市名",
             value: `🏙 ||ひみつ||`,
             inline: true
           });
-    
+
           await interaction.reply({ content: "送信します！", ephemeral: true });
           await interaction.followUp({ embeds: [embed] });
         } else {
@@ -123,7 +141,7 @@ const commands = [
         console.error(er);
         try {
           await interaction.reply({ content: "送信に失敗しました...", ephemeral: true });
-        } catch {} // エラーなんて握りつぶしちゃえ！（雑）
+        } catch { } // エラーなんて握りつぶしちゃえ！（雑）
       }
     }
   },
@@ -131,13 +149,21 @@ const commands = [
   {
     name: "help_button",
     async execute(interaction) {
+      /*
       const help = new ButtonBuilder().setCustomId("commandhelp")
         .setLabel("コマンドヘルプ")
         .setStyle(ButtonStyle.Primary)
+      */
       const help2 = new ButtonBuilder().setCustomId("bothelp")
         .setLabel("botヘルプ")
         .setStyle(ButtonStyle.Success)
-      const row = new ActionRowBuilder().addComponents(help, help2)
+      const help3 = new ButtonBuilder().setCustomId("boosthelp")
+        .setLabel("ブーストヘルプ")
+        .setStyle(ButtonStyle.Secondary)
+      const help4 = new ButtonBuilder().setCustomId("emojihelp")
+        .setLabel("絵文字ヘルプ")
+        .setStyle(ButtonStyle.Secondary)
+      const row = new ActionRowBuilder().addComponents(/*help, */help2, help3, help4)
       await interaction.reply({
         content: "ヘルプメニュー↓",
         components: [row]
@@ -180,7 +206,7 @@ const commands = [
   {
     name: "role_list",
     async execute(interaction) {
-      const serverid = interaction.guild.id
+      const serverid = interaction.guildId
       const embed = new EmbedBuilder().setTitle("ルーレットロールリスト")
         .setDescription(roles[serverid].map(r => `<@&${r}>`).join("\n"))
         .setColor("Gold")
@@ -203,31 +229,6 @@ const commands = [
         .setColor("Gold");
       await interaction.reply({
         embeds: [embed], components: [row]
-      });
-    }
-  },
-
-  {
-    name: "commandhelp",
-    async execute(interaction) {
-      const embed = new EmbedBuilder()
-        .setTitle("コマンドヘルプ")
-        .setDescription("ページを選んでください")
-        .setColor("Gold");
-
-      const pageButtons = commandPages.map((_, i) => {
-        return new ButtonBuilder()
-          .setCustomId(`commandhelp_${i + 1}`)
-          .setLabel(`ページ${i + 1}`)
-          .setStyle(ButtonStyle.Primary);
-      });
-
-      const row = new ActionRowBuilder().addComponents(pageButtons);
-
-      await interaction.reply({
-        embeds: [embed],
-        components: [row],
-        ephemeral: true
       });
     }
   },
@@ -303,68 +304,234 @@ const commands = [
     name: "boost",
     async execute(interaction) {
       try {
-        let { data: boost, berror } = await supabase // サーバーのブースト数を取得
-          .from("boost")
-          .select("boost_num")
-          .eq("serverid", interaction.guildId)
-          .single();
-        boost = boost ?? { boost_num: 0 };
-        if (berror) {
-          console.error(berror);
-          return;
-        }
-        let { data: money, error: uerror } = await supabase // ユーザーの所持金を取得
-          .from("userinfo")
-          .select("money")
-          .eq("userid", interaction.user.id)
-          .single();
-        money = money ?? { money: 0 };
-        if (uerror) {
-          console.error(uerror);
-          return;
-        }
-        let { data: myboost, error: mberror } = await supabase // ユーザーの総ブースト数を取得
-          .from("userinfo")
-          .select("total_boost")
-          .eq("userid", interaction.user.id)
-          .single();
-        myboost = myboost ?? { total_boost: 0 };
-        if (mberror) {
-          console.error(mberror);
-          return;
-        }
-        const { error: userror } = await supabase // ブースト数を更新
-          .from("boost")
-          .upsert({ serverid: interaction.guildId, boost_num: boost.boost_num + 1 })
-        if (userror) {
-          console.error(userror)
-          return
-        }
-        const { error: userror2 } = await supabase // ユーザーの所持金を更新 + ユーザーの総ブースト数を更新
-          .from("userinfo")
-          .upsert({
-            userid: interaction.user.id,
-            money: money.money - 1000,
-            total_boost: myboost.total_boost + 1
-          })
-        if (userror2) {
-          console.error(userror2)
-          return
-        }
-        const embed = new EmbedBuilder()
-          .setTitle("ブースト！")
-          .setDescription(`現在のブースト数<:boost:1473607538426773525>: ${boost.boost_num + 1}`)
-          .setColor("Gold")
-          .setFooter({ text: "ブースト管理: supabase" })
-        await interaction.reply({ embeds: [embed] });
+        const form = new ButtonBuilder()
+          .setCustomId("boost_confirm")
+          .setLabel("ブーストする！")
+          .setStyle(ButtonStyle.Success)
+        const row = new ActionRowBuilder().addComponents(form);
+        await interaction.reply({ content: "3000コインでブーストしますか？", ephemeral: true, components: [row] });
       } catch (error) {
         console.error(error);
         await interaction.reply({ content: "ブーストに失敗しました..." });
       }
     }
+  },
+
+  {
+    name: "boost_status",
+    async execute(interaction) {
+      try {
+        let { data: boost, error } = await supabase
+          .from("boost")
+          .select("boost_num")
+          .eq("serverid", interaction.guildId)
+          .single();
+        boost = boost.boost_num ?? 0;
+        if (error) {
+          console.error(error);
+          await interaction.reply({ content: "ブーストの情報の取得に失敗しました...", ephemeral: true });
+          return;
+        }
+        const embed = new EmbedBuilder()
+          .setTitle("ブースト状況")
+          .setDescription(`現在のブースト数<:boost:1473607538426773525>: ${boost}`)
+          .setColor("Gold")
+          .setFooter({ text: "ブースト管理: supabase" })
+        await interaction.reply({ embeds: [embed] });
+      } catch (error) {
+        console.error(error);
+        await interaction.reply({ content: "ブーストの情報の取得に失敗しました...", ephemeral: true });
+      }
+    }
+  },
+
+  {
+    name: "embedbuilder",
+    async execute(interaction) {
+      const { data: boost, error } = await supabase
+        .from("boost")
+        .select("boost_num")
+        .eq("serverid", interaction.guildId)
+        .single();
+      if (error) {
+        console.error(error);
+        return await interaction.reply({
+          content: "エラーが発生しました...",
+          ephemeral: true
+        });
+      }
+      const reboost = boost.boost_num ?? 0
+      if (reboost < 14) {
+        return await interaction.reply({
+          content: "このサーバーのブースト数が14<:boost:1473607538426773525>未満のため、この機能は使用できません...", ephemeral: true
+        })
+      }
+      const modal = new ModalBuilder()
+        .setCustomId("embedbuilder_modal")
+        .setTitle("埋め込み作成");
+      const titleInput = new TextInputBuilder()
+        .setCustomId("embed_title")
+        .setLabel("タイトル")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(true);
+      const descriptionInput = new TextInputBuilder()
+        .setCustomId("embed_description")
+        .setLabel("説明")
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(false);
+      const footerInput = new TextInputBuilder()
+        .setCustomId("embed_footer")
+        .setLabel("フッター")
+        .setStyle(TextInputStyle.Short)
+        .setRequired(false);
+      const colorInput = new TextInputBuilder()
+        .setCustomId("embed_color")
+        .setLabel("カラーコード（例: #FF0000）")
+        .setStyle(TextInputStyle.Short)
+        .setMinLength(7)
+        .setMaxLength(7)
+        .setRequired(false);
+      const row1 = new ActionRowBuilder().addComponents(titleInput);
+      const row2 = new ActionRowBuilder().addComponents(descriptionInput);
+      const row3 = new ActionRowBuilder().addComponents(colorInput);
+      const row4 = new ActionRowBuilder().addComponents(footerInput);
+      modal.addComponents(row1, row2, row3, row4);
+      await interaction.showModal(modal);
+    }
+  },
+
+  {
+    name: "bot_emoji",
+    async execute(interaction) {
+      const { data: boost, error } = await supabase
+        .from("boost")
+        .select("boost_num")
+        .eq("serverid", interaction.guildId)
+        .single();
+      const reboost = boost.boost_num ?? 0 
+      if (reboost < 5) {
+        await interaction.reply({ content: "このサーバーのブースト数が5<:boost:1473607538426773525>未満のため、この機能は使用できません...", ephemeral: true });
+        return;
+      }
+      const name = interaction.client.emojis.cache
+      if (!name.some(e => e.name === interaction.options.getString("emoji"))) {
+        await interaction.reply({ content: "その絵文字は存在しません...", ephemeral: true });
+        return;
+      }
+      await interaction.reply({ content: `<:${interaction.options.getString("emoji")}:${name.find(e => e.name === interaction.options.getString("emoji")).id}>` });
+    }
+  },
+
+  {
+    name: "custom_link",
+    async execute(interaction) {
+      if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        await interaction.reply({ content: "このコマンドを使用するには管理者権限が必要です！", ephemeral: true });
+        return;
+      }
+      const { data: boost, error: berror } = await supabase
+        .from("boost")
+        .select("boost_num")
+        .eq("serverid", interaction.guildId)
+        .single()
+      const reboost = boost.boost_num ?? 0
+      if (reboost < 27) {
+        await interaction.reply({
+          content: "このサーバーのブースト数が27<:boost:1473607538426773525>未満のため、この機能は使用できません...",
+          ephemeral: true
+        })
+        return;
+      }
+      const name = interaction.options.getString("name");
+      const url = interaction.options.getString("url") ?? (await interaction.guild.invites.create(interaction.channelId, {
+          maxAge: 0,
+          maxUses: 0,
+          unique: true,
+        })).url;
+      const key = interaction.options.getString("key")
+      const { error: inserterror } = await supabase
+        .from("link")
+        .insert({
+          "name": name,
+          "key": key,
+          "link": url,
+        })
+      if (inserterror) {
+        await interaction.reply({ content: "この名前はもう使われているよ！", ephemeral: true })
+        return
+      }
+      const embed = new EmbedBuilder()
+        .setTitle("カスタム招待リンク")
+        .setDescription(`https://souchan-bot.pages.dev/invite/?link=${name}`)
+      const button = new ButtonBuilder()
+        .setLabel("アクセスボタン")
+        .setStyle(ButtonStyle.Link)
+        .setURL(`https://souchan-bot.pages.dev/invite/?link=${name}`)
+      const row = new ActionRowBuilder().addComponents(button)
+      await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+    }
+  },
+
+  {
+    name: "work",
+    async execute(interaction) {
+      const { data: time, error: timeerror } = await supabase
+        .from("userinfo")
+        .select("work_interval")
+        .eq("userid", interaction.user.id)
+        .single();
+      const retime = time?.work_interval ?? 0;
+      if (retime - Date.now() > 0) {
+        const retimemin = String(Math.ceil((retime - Date.now()) / 60000) - 1) + "分";
+        const retimesec = String(Math.ceil((retime - Date.now()) % 60000 / 1000)) + "秒";
+        const embed1 = new EmbedBuilder()
+          .setTitle("クールダウン中...")
+          .setDescription(`workは${retimemin}${retimesec}後に再度試すことができます！`)
+          .setColor("Red")
+        await interaction.reply({ embeds: [embed1], ephemeral: true });
+        return;
+      }
+      const { error: tuperr } = await supabase
+        .from("userinfo")
+        .update({
+          work_interval: Date.now() + 600000
+        })
+        .eq("userid", interaction.user.id)
+      if (tuperr) {
+        console.error(tuperr);
+        await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
+        return;
+      }
+      const money = await supabase
+        .from("userinfo")
+        .select("money")
+        .eq("userid", interaction.user.id)
+        .single()
+      const addMoney = Math.floor(Math.random() * 1000) + 500;
+      const newMoney = (money.data?.money ?? 0) + addMoney;
+      const { error } = await supabase
+        .from("userinfo")
+        .upsert({
+          userid: interaction.user.id,
+          money: newMoney
+        })
+        .eq("userid", interaction.user.id)
+      if (error) {
+        console.error(error);
+        await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
+        return;
+      }
+      const embed = new EmbedBuilder()
+        .setTitle("お仕事完了！")
+        .setDescription(`${addMoney}コインを手に入れたよ！\n現在の所持金: ${newMoney}コイン`)
+        .setColor("Gold")
+        .setFooter({ text: "所持金管理: supabase" })
+      await interaction.reply({ embeds: [embed] });
+    }
   }
 ];
 
+/*
 let commandPages = [];
 
 async function loadCommandPages(client) {
@@ -383,9 +550,10 @@ async function loadCommandPages(client) {
 
   commandPages = chunk(set_command, 4);
 }
-
+*/
 
 const buttons = [
+/*
   {
     name: "commandhelp",
     async execute(interaction) {
@@ -445,7 +613,7 @@ const buttons = [
       });
     }
   },
-
+*/
   {
     name: "poll_vote",
     async execute(interaction) {
@@ -467,7 +635,6 @@ const buttons = [
     }
   },
 
-
   {
     name: "bothelp",
     async execute(interaction) {
@@ -483,23 +650,152 @@ const buttons = [
     }
   },
 
+  {
+    name: "boosthelp",
+    async execute(interaction) {
+      const embed = new EmbedBuilder()
+        .setTitle("ブーストヘルプ")
+        .setDescription(`
+5ブースト: bot内絵文字(/emoji)の使用権
+14ブースト: 埋め込み作成コマンド(/embedbuilder)の使用権
+27ブースト: カスタム招待リンク(/custom_link)の使用権
+        `)
+        .setColor("LightGrey");
+      await interaction.reply({
+        ephemeral: true,
+        embeds: [embed]
+      });
+    }
+  },
+
+  {
+    name: "emojihelp",
+    async execute(interaction) {
+      const reload = await interaction.guild.emojis.fetch();
+      const emojis = interaction.client.emojis.cache.map(e => e.name);
+      const embed = new EmbedBuilder()
+        .setTitle("絵文字ヘルプ")
+        .setDescription(`使える絵文字: \n${emojis.map(e => `\`${e}\``).join("\n")}
+同じ名前の場合、上にあるものが優先されるよ！`)
+        .setColor("LightGrey");
+      await interaction.reply({
+        ephemeral: true,
+        embeds: [embed]
+      });
+    }
+  },
+
+  {
+    name: "boost_confirm",
+    async execute(interaction) {
+      try {
+        // 所持金取得
+        let { data: moneyData, error: uerror } = await supabase
+          .from("userinfo")
+          .select("money")
+          .eq("userid", interaction.user.id)
+          .single();
+
+        const money = moneyData?.money ?? 0;
+
+        if (money < 3000) {
+          return interaction.reply({
+            content: "所持金が足りません！",
+            ephemeral: true
+          });
+        }
+
+        // サーバーブースト数取得
+        let { data: boostData, error: berror } = await supabase
+          .from("boost")
+          .select("boost_num")
+          .eq("serverid", interaction.guildId)
+          .single();
+
+        const boost = boostData?.boost_num ?? 0;
+
+        // ユーザーの総ブースト数取得
+        let { data: myboostData, error: mberror } = await supabase
+          .from("userinfo")
+          .select("total_boost")
+          .eq("userid", interaction.user.id)
+          .single();
+
+        const myboost = myboostData?.total_boost ?? 0;
+
+        // サーバーブースト更新
+        const { error: userror } = await supabase
+          .from("boost")
+          .upsert({
+            serverid: interaction.guildId,
+            boost_num: boost + 1
+          });
+
+        // ユーザーの所持金 & 総ブースト更新
+        const { error: userror2 } = await supabase
+          .from("userinfo")
+          .upsert({
+            userid: interaction.user.id,
+            money: money - 3000,
+            total_boost: myboost + 1
+          });
+
+        const embed = new EmbedBuilder()
+          .setTitle("ブースト！")
+          .setDescription(`現在のブースト数<:boost:1473607538426773525>: ${boost + 1}`)
+          .setColor("Gold")
+          .setFooter({ text: "ブースト管理: supabase" });
+
+        await interaction.reply({ embeds: [embed] });
+
+      } catch (error) {
+        console.error(error);
+        await interaction.reply({ content: "ブーストに失敗しました..." });
+      }
+    }
+  },
+]
+
+const modals = [
+  {
+    name: "embedbuilder_modal",
+    async execute(interaction) {
+      const title = interaction.fields.getTextInputValue("embed_title");
+      const description = interaction.fields.getTextInputValue("embed_description");
+      const footer = interaction.fields.getTextInputValue("embed_footer");
+      const color = interaction.fields.getTextInputValue("embed_color") || "#FFFFFF";
+
+      // カラーコードが不正ならデフォルトにする
+      const validColor = /^#?[0-9A-Fa-f]{6}$/.test(color)
+        ? color.replace("#", "")
+        : "FFFFFF";
+
+      const embed = new EmbedBuilder()
+        .setTitle(title ?? null)
+        .setDescription(description ?? null)
+        .setColor(`#${validColor}`)
+        .setFooter({ text: footer ?? null });
+      await interaction.reply({ embeds: [embed] });
+    }
+  }
 ]
 
 //  スラッシュコマンド登録
 const rest = new REST({ version: "10" }).setToken(process.env.token);
 
 //  コマンド実行
+// ボタンの実行
 client.on("interactionCreate", async interaction => {
   if (!interaction.isButton()) return;
 
-  const base = interaction.customId.split("_")[0];
+  // const base = interaction.customId.split("_")[0];
 
   // commandhelp_1 → commandhelp_page に変換
-  const name = base === "commandhelp" && interaction.customId.includes("_")
+  const name = /* base === "commandhelp" && interaction.customId.includes("_")
     ? "commandhelp_page"
     : base === "poll" && interaction.customId.startsWith("poll_")
-    ? "poll_vote"
-    : base;
+      ? "poll_vote"
+      : */ interaction.customId
 
   const button = buttons.find(b => b.name === name);
   if (!button) return;
@@ -517,6 +813,7 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
+// スラッシュコマンド実行
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
   const command = commands.find(c => c.name === interaction.commandName);
@@ -535,6 +832,25 @@ client.on("interactionCreate", async interaction => {
   }
 });
 
+// モーダルの送信を受け取る
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isModalSubmit()) return;
+  const modal = modals.find(c => c.name === interaction.customId)
+  if (!modal) return;
+  try {
+    await modal.execute(interaction);
+  } catch (err) {
+    if (err.code === 50013) {
+      interaction.reply({
+        content: "権限が足りないよ！", ephemeral: true
+      })
+      return
+    }
+    console.error(err)
+  }
+});
+
+// メッセージを送るたびにお金がもらえる機能（スパム対策のため5文字以上で、最大200コインまで）
 client.on("messageCreate", async message => {
   try {
     if (message.author.bot || !message.guild) return;
@@ -573,11 +889,12 @@ client.on("messageCreate", async message => {
   }
 });
 
+// メッセージコマンド
 client.on("messageCreate", async message => {
   try {
     if (message.author.bot) return;
-    if (message.content.startsWith("!message")) {
-      const text = message.content.split(" ")[1]
+    if (message.content.startsWith("!message ")) {
+      const text = message.content.replace("!message ", "")
       await message.delete()
       await message.channel.send(text)
     }
@@ -602,10 +919,14 @@ app.listen(3000, () => {
 
 client.once("clientReady", async () => {
   console.log("Botが起動したよ！");
-  await loadCommandPages(client);
+  setInterval(() => {
+    const server = client.guilds.cache.size
+    client.user.setActivity(`${server}サーバーに導入中...`, {
+      type: ActivityType.Watching
+    })
+  })
+  // await loadCommandPages(client);
 });
 
 //  ログイン
 client.login(process.env.token);
-
-
