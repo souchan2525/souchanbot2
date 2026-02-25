@@ -425,10 +425,6 @@ const commands = [
   {
     name: "custom_link",
     async execute(interaction) {
-      if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        await interaction.reply({ content: "このコマンドを使用するには管理者権限が必要です！", ephemeral: true });
-        return;
-      }
       const { data: boost, error: berror } = await supabase
         .from("boost")
         .select("boost_num")
@@ -440,6 +436,10 @@ const commands = [
           content: "このサーバーのブースト数が27<:boost:1473607538426773525>未満のため、この機能は使用できません...",
           ephemeral: true
         })
+        return;
+      }
+      if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        await interaction.reply({ content: "このコマンドを使用するには管理者権限が必要です！", ephemeral: true });
         return;
       }
       const name = interaction.options.getString("name");
@@ -930,4 +930,5 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
+
 
