@@ -14,6 +14,8 @@ const {
   ActivityType,
   TextInputBuilder,
   TextInputStyle,
+  PermissionsBitField,
+  MessageFlags,
 } = require("discord.js");
 const { createClient } = require("@supabase/supabase-js");
 const express = require("express");
@@ -34,7 +36,10 @@ const client = new Client({
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildMessageReactions,
     GatewayIntentBits.GuildPresences,
-    GatewayIntentBits.GuildWebhooks
+    GatewayIntentBits.GuildWebhooks,
+    GatewayIntentBits.GuildInvites,
+    GatewayIntentBits.GuildMessageReactions,
+    GatewayIntentBits.DirectMessages,
   ],
   partials: ['GUILD_MEMBER', 'USER', 'MESSAGE']
 });
@@ -44,7 +49,8 @@ const roles = {
     "1425982074992464024",
     "1425982078239113415",
     "1425982096773615627",
-    "1425982100091310110"
+    "1425982100091310110",
+    "1425982127929032795",
   ],
   "1238284055540138005": [ // そうちゃんのメモサーバー
     "1380458612756844718", // 管理者スター
@@ -175,16 +181,33 @@ const commands = [
     name: "role_roulette",
     async execute(interaction) {
       try {
+        const sroles2 = roles[interaction.guildId];
+        if (!sroles2 || !Array.isArray(sroles2)) {
+          return await interaction.reply({
+            content: "このサーバーのルーレットロール情報がありません！",
+            ephemeral: true
+          })
+        }
+        const mroles = interaction.member.roles.cache.filter(r => r.name !== "@everyone")
         const randint = max => Math.floor(Math.random() * max);
         const serverid = interaction.guildId
-        const newrole = roles[serverid][randint(roles[serverid].length)]
+        let newrole = roles[serverid][randint(roles[serverid].length)]
         if (!newrole) {
-          await interaction.reply({ content: "このサーバーのルーレットロール情報がありません！", ephemeral: true })
+          return await interaction.reply({ content: "このサーバーのルーレットロール情報がありません！", ephemeral: true })
+        }
+        if (sroles2.every(id => mroles.has(id))) {
+          return await interaction.reply({
+            content: "リストにあるすべてのロールを持っています！",
+            ephemeral: true
+          });
           return;
+        }
+        while (interaction.member.roles.cache.has(newrole)) {
+          newrole = roles[serverid][randint(roles[serverid].length)]
         }
         const oldrole = interaction.options.getRole("role").id
         if (!interaction.member.roles.cache.has(oldrole)) {
-          await interaction.reply({ content: "そのロールを持っていません！", ephemeral: true })
+          await interaction.editReply({ content: "そのロールを持っていません！", ephemeral: true })
           return;
         }
         await interaction.member.roles.remove(oldrole)
@@ -198,7 +221,7 @@ const commands = [
         await interaction.reply({ embeds: [embed] })
       } catch (error) {
         console.error(error);
-        await interaction.reply({ content: "ロールの操作に失敗しました..." });
+        await interaction.reply({ content: "ロールの操作に失敗しました...", ephemeral: true });
       }
     }
   },
@@ -348,6 +371,7 @@ const commands = [
   {
     name: "embedbuilder",
     async execute(interaction) {
+      await interaction.deferReply()
       const { data: boost, error } = await supabase
         .from("boost")
         .select("boost_num")
@@ -355,14 +379,14 @@ const commands = [
         .single();
       if (error) {
         console.error(error);
-        return await interaction.reply({
+        return await interaction.editReply({
           content: "エラーが発生しました...",
           ephemeral: true
         });
       }
       const reboost = boost.boost_num ?? 0
       if (reboost < 14) {
-        return await interaction.reply({
+        return await interaction.editReply({
           content: "このサーバーのブースト数が14<:boost:1473607538426773525>未満のため、この機能は使用できません...", ephemeral: true
         })
       }
@@ -378,7 +402,7 @@ const commands = [
         .setCustomId("embed_description")
         .setLabel("説明")
         .setStyle(TextInputStyle.Paragraph)
-        .setRequired(false);
+        .setRequired(f);
       const footerInput = new TextInputBuilder()
         .setCustomId("embed_footer")
         .setLabel("フッター")
@@ -403,51 +427,69 @@ const commands = [
   {
     name: "bot_emoji",
     async execute(interaction) {
+      await interaction.deferReply()
       const { data: boost, error } = await supabase
         .from("boost")
         .select("boost_num")
         .eq("serverid", interaction.guildId)
         .single();
+      if (error) {
+        console.error(error)
+        await interaction.editReply({ content: "エラーが発生しました...", ephemeral: true} )
+        return;
+      }
       const reboost = boost.boost_num ?? 0 
       if (reboost < 5) {
-        await interaction.reply({ content: "このサーバーのブースト数が5<:boost:1473607538426773525>未満のため、この機能は使用できません...", ephemeral: true });
+        await interaction.editReply({ content: "このサーバーのブースト数が5<:boost:1473607538426773525>未満のため、この機能は使用できません...", ephemeral: true });
         return;
       }
       const name = interaction.client.emojis.cache
       if (!name.some(e => e.name === interaction.options.getString("emoji"))) {
-        await interaction.reply({ content: "その絵文字は存在しません...", ephemeral: true });
+        await interaction.editReply({ content: "その絵文字は存在しません...", ephemeral: true });
         return;
       }
-      await interaction.reply({ content: `<:${interaction.options.getString("emoji")}:${name.find(e => e.name === interaction.options.getString("emoji")).id}>` });
+      await interaction.editReply({ content: `<:${interaction.options.getString("emoji")}:${name.find(e => e.name === interaction.options.getString("emoji")).id}>` });
     }
   },
 
   {
     name: "custom_link",
     async execute(interaction) {
+      await interaction.deferReply({ ephemeral: true })
       const { data: boost, error: berror } = await supabase
         .from("boost")
         .select("boost_num")
         .eq("serverid", interaction.guildId)
         .single()
+      if (berror) {
+        console.error(berror)
+        await interaction.editReply({ content: "エラーが発生しました...", ephemeral: true} )
+        return;
+      }
       const reboost = boost.boost_num ?? 0
       if (reboost < 27) {
-        await interaction.reply({
+        await interaction.editReply({
           content: "このサーバーのブースト数が27<:boost:1473607538426773525>未満のため、この機能は使用できません...",
           ephemeral: true
         })
         return;
       }
       if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        await interaction.reply({ content: "このコマンドを使用するには管理者権限が必要です！", ephemeral: true });
+        await interaction.editReply({ content: "このコマンドを使用するには管理者権限が必要です！", ephemeral: true });
         return;
       }
       const name = interaction.options.getString("name");
+
       const url = interaction.options.getString("url") ?? (await interaction.guild.invites.create(interaction.channelId, {
-          maxAge: 0,
-          maxUses: 0,
-          unique: true,
-        })).url;
+        maxAge: 0,
+        maxUses: 0,
+        unique: true,
+      })).url;
+      if (!url.startsWith("https://discord.gg/")) {
+        return await interaction.editReply({
+          content: "招待リンクが正しくないよ！", Flags: [MessageFlags.Ephemeral]
+        })
+      }
       const key = interaction.options.getString("key")
       const { error: inserterror } = await supabase
         .from("link")
@@ -457,24 +499,29 @@ const commands = [
           "link": url,
         })
       if (inserterror) {
-        await interaction.reply({ content: "この名前はもう使われているよ！", ephemeral: true })
+        if (inserterror.code === "23505") {
+          await interaction.editReply({ content: "その名前はすでに使われています！", ephemeral: true })
+          return;
+        }
+        await interaction.editReply({ content: "エラーが発生しました...", ephemeral: true })
         return
       }
       const embed = new EmbedBuilder()
         .setTitle("カスタム招待リンク")
-        .setDescription(`https://souchan-bot.pages.dev/invite/?link=${name}`)
+        .setDescription(`sb-invite.web.app/${name}`)
       const button = new ButtonBuilder()
         .setLabel("アクセスボタン")
         .setStyle(ButtonStyle.Link)
-        .setURL(`https://souchan-bot.pages.dev/invite/?link=${name}`)
+        .setURL(`https://sb-invite.web.app/${name}`)
       const row = new ActionRowBuilder().addComponents(button)
-      await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
+      await interaction.editReply({ embeds: [embed], components: [row], ephemeral: true });
     }
   },
 
   {
     name: "work",
     async execute(interaction) {
+      await interaction.deferReply()
       const { data: time, error: timeerror } = await supabase
         .from("userinfo")
         .select("work_interval")
@@ -488,7 +535,7 @@ const commands = [
           .setTitle("クールダウン中...")
           .setDescription(`workは${retimemin}${retimesec}後に再度試すことができます！`)
           .setColor("Red")
-        await interaction.reply({ embeds: [embed1], ephemeral: true });
+        await interaction.editReply({ embeds: [embed1], ephemeral: true });
         return;
       }
       const { error: tuperr } = await supabase
@@ -499,7 +546,7 @@ const commands = [
         .eq("userid", interaction.user.id)
       if (tuperr) {
         console.error(tuperr);
-        await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
+        await interaction.editReply({ content: "エラーが発生しました...", ephemeral: true });
         return;
       }
       const money = await supabase
@@ -507,7 +554,7 @@ const commands = [
         .select("money")
         .eq("userid", interaction.user.id)
         .single()
-      const addMoney = Math.floor(Math.random() * 1000) + 500;
+      const addMoney = Math.floor(Math.random() * (1000 + 1)) + 500;
       const newMoney = (money.data?.money ?? 0) + addMoney;
       const { error } = await supabase
         .from("userinfo")
@@ -518,7 +565,7 @@ const commands = [
         .eq("userid", interaction.user.id)
       if (error) {
         console.error(error);
-        await interaction.reply({ content: "エラーが発生しました...", ephemeral: true });
+        await interaction.editReply({ content: "エラーが発生しました...", ephemeral: true });
         return;
       }
       const embed = new EmbedBuilder()
@@ -526,7 +573,7 @@ const commands = [
         .setDescription(`${addMoney}コインを手に入れたよ！\n現在の所持金: ${newMoney}コイン`)
         .setColor("Gold")
         .setFooter({ text: "所持金管理: supabase" })
-      await interaction.reply({ embeds: [embed] });
+      await interaction.editReply({ embeds: [embed] });
     }
   }
 ];
@@ -930,5 +977,3 @@ client.once("clientReady", async () => {
 
 //  ログイン
 client.login(process.env.token);
-
-
