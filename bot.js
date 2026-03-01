@@ -25,7 +25,7 @@ const app = express();
 // @ts-check
 
 // Supabase
-const supabase = createClient(process.env.baseurl, process.env.basekey);
+const supabase = createClient(process.env.BASEURL, process.env.BASEURL);
 
 // Discord クライアント
 const client = new Client({
@@ -956,6 +956,14 @@ client.on("messageCreate", async message => {
   }
 })
 
+app.get("/", (req, res) => {
+  res.send("Bot is running!");
+});
+
+app.listen(3000, () => {
+  console.log("Web server is running on port 3000");
+});
+
 client.once("clientReady", async () => {
   console.log("Botが起動したよ！");
   setInterval(() => {
@@ -968,12 +976,4 @@ client.once("clientReady", async () => {
 });
 
 //  ログイン
-client.login(process.env.token);
-
-app.get("/", (req, res) => {
-  res.send("Bot is running!");
-});
-
-app.listen(3000, () => {
-  console.log("Web server is running on port 3000");
-});
+client.login(process.env.TOKEN);
